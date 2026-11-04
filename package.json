@@ -1,0 +1,27 @@
+{
+  "name": "netflix-ai-watch-spaces",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI-orchestrated social watch spaces for synchronized streaming: MERN reference implementation",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "npm --workspace server run dev",
+    "dev:client": "npm --workspace client run dev",
+    "seed": "npm --workspace server run seed",
+    "test": "npm --workspace server test",
+    "build": "npm --workspace client run build",
+    "start": "npm --workspace server start",
+    "eval:recs": "npm --workspace server run eval:recs",
+    "loadtest": "npm --workspace server run loadtest"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

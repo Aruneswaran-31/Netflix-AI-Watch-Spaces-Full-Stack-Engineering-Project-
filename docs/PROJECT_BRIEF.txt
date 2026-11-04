@@ -1,0 +1,465 @@
+
+NETFLIX
+Product & Platform Engineering
+PRODUCT REQUIREMENTS DOCUMENT
+AI-Driven Hyper-Personalized Interactive Content
+& Social Watch Spaces
+Full-Stack or Backend-Only Engineering Internship Project Specification
+Advanced Track  |  Single-Engineer Build  |  4-Week Delivery Cycle
+Document Owner
+Principal Product Manager & Enterprise Architect, Netflix Platform Engineering
+Prepared For
+Software Engineering Intern (Full-Stack)
+Program
+Netflix Engineering Internship Program
+Document Status
+Approved for Intern Assignment — v1.0
+Track
+Watch Parties & Real-Time Interactive Experiences
+Estimated Duration
+4 Weeks (1 Engineer)
+Difficulty Level
+Advanced
+Last Updated
+September 2026
+
+
+About This Document
+This Product Requirements Document (PRD) defines the specification for the AI-Driven Hyper-Personalized Interactive Content & Social Watch Spaces initiative. It is issued to a single full-stack engineering intern for independent, end-to-end delivery over a four-week cycle, and covers the problem this feature solves, the system architecture, the functional and non-functional requirements, and the criteria against which the finished build will be evaluated.
+The intern owns the full build: infrastructure, environment, and implementation choices within the boundaries set out in Section 4 and Section 8. Video assets, sample titles, and metadata timelines are to be sourced or produced by the intern as part of the engineering work — this PRD specifies the system's required behavior, not the dataset it runs on.
+1. Executive Summary & Objectives
+1.1 Problem Statement
+By 2026, passive video streaming is no longer enough to hold audience attention on its own. Viewers increasingly watch together while physically apart, expect content to react to their curiosity in the moment ("who is that actor?", "what does that word mean?", "wait, what happened earlier?"), and are used to platforms that adapt to their individual taste rather than showing everyone the same static experience.
+Today's watch-together tools are largely limited to basic playback synchronization and a text chat sidebar. They do not understand what is happening on screen, cannot answer a viewer's question about the plot or a scene in real time, and provide no mechanism for a platform to layer in lightweight, non-destructive personalization (such as regionally relevant subtitles, contextual trivia, or optional alternate framing of minor scenes) without re-authoring the entire title.
+This project addresses that gap by building a real-time, AI-orchestrated "Social Watch Space": a synchronized group viewing room where an AI co-pilot ingests the video timeline, surfaces contextual information at the right second, answers viewer questions live, and can apply small, pre-approved content variations (subtitle language, regional asset swaps, or minor optional narrative branches) without breaking playback synchronization for the group.
+1.2 Project Vision
+Build a single, coherent, production-shaped system — not a prototype held together with hacks — that proves out the core mechanics of AI-assisted, socially synchronized, personalized viewing. The system should be architecturally sound enough that, in a real organization, it could plausibly graduate from an internal proof of concept into a pilot feature.
+1.3 Success Metrics (KPIs)
+KPI
+Definition
+Target for This Build
+Playback Sync Drift
+Maximum timestamp deviation between any two participants in the same watch room
+< 250 ms under normal network conditions
+AI Response Latency
+Time from a viewer's question or timeline event to the AI co-pilot's rendered response
+< 3 seconds (P95)
+Room Join Success Rate
+% of join attempts that result in a synced, playable session
+> 99% in local/staging test runs
+Concurrent Room Capacity (Target Design)
+Participants a single watch room is designed to support
+Design for 50 concurrent participants per room
+Recommendation Relevance (Offline Eval)
+Precision@5 of the recommendation engine against a held-out interaction set you generate
+≥ 0.6 on your own test dataset
+Trivia/Context Accuracy
+% of AI-generated contextual facts flagged as accurate in your own manual QA pass
+≥ 90% on your test content
+
+2. What You Are Building
+A single, working, end-to-end system — not a mockup or a set of disconnected demos. At the end of four weeks, you should be able to open the application, create a Watch Space, invite a second browser session into it, watch a video in sync, ask the AI co-pilot a question about what's on screen, and see a personalized recommendation rail — all backed by a real database and a real API, on one stack of your choosing from Section 9.
+Concretely, you are building:
+A React client with a synchronized video player, a live Watch Room (chat, presence, AI co-pilot panel), and a personal dashboard.
+A REST API layer handling authentication, catalog/title data, room management, recommendations, and analytics.
+A real-time gateway (WebSockets) that keeps every participant's playback state, chat, and presence in sync.
+An AI Content Engine that ingests a per-title timeline you author yourself, answers viewer questions with retrieval-grounded responses, surfaces timeline-triggered trivia, and applies pre-approved subtitle/narrative variations.
+A relational or document database (your choice, per Section 9) modeling users, titles, timelines, watch sessions, chat history, and interaction/recommendation data.
+A recommendation engine trained on interaction data you generate yourself through normal use and testing of the system.
+An admin-facing interface for uploading and validating a title's metadata timeline without hand-editing raw files.
+A reset-friendly, environment-variable-driven configuration so the whole system can be spun up from scratch by someone other than you, following your documentation.
+NOTE: You are responsible for sourcing or creating your own sample video content, titles, and metadata timelines. The PRD does not supply a dataset — treat this as a normal, real-world engineering constraint: define what you need, then build it.
+3. Learning Outcomes
+By completing this project, you should be able to demonstrate practical, defensible understanding of:
+Designing and implementing real-time, multi-client synchronization over WebSockets, including drift correction and reconnect handling — not just broadcasting a single message type.
+Building a retrieval-grounded AI feature (retrieval-augmented generation over structured metadata) rather than an unconstrained chatbot, including how to keep AI output verifiable and scoped.
+Modeling the same domain in both a relational schema and a document schema, and reasoning about the trade-offs between them for a read-heavy, timeline-indexed workload.
+Designing and documenting a REST API and a WebSocket event contract that a second engineer could implement against without asking you clarifying questions.
+Implementing authentication, JWT-based sessions, and server-enforced role-based access control across both HTTP and WebSocket entry points.
+Building and evaluating a basic hybrid recommendation model (content-based + collaborative filtering) against your own interaction dataset.
+Instrumenting a system for the specific performance dimensions that matter to it (sync drift, AI latency, API latency) and reporting real, measured numbers rather than estimates.
+Planning and executing a non-trivial full-stack project solo, against a fixed four-week timeline, with weekly checkpoints and incremental, testable delivery.
+Writing engineering documentation (architecture overview, API reference, setup guide) that a first-time reader could follow to run the system unaided.
+4. Scope and Boundaries
+4.1 In Scope
+A single-operator build: one engineer, one deployment, used for your own testing and demonstration — not a multi-tenant production service.
+A private, self-hosted or locally-run environment (local machine, a personal cloud VM, or a container setup you control).
+Real-time synchronized playback and chat for one or more concurrently open Watch Spaces.
+An AI Content Engine grounded in metadata you author yourself for at least one full test title (ideally two or three, to demonstrate the system generalizes).
+A working recommendation engine trained on interaction data generated through your own testing.
+Role-based access control with at minimum viewer, host, and admin roles, enforced server-side.
+Automated tests covering the playback state machine, AI retrieval logic, and access control, per Section 10 and Section 12.
+Complete documentation sufficient for a first-time reader to set up and run the system unaided.
+4.2 Out of Scope
+Multi-tenant support for many simultaneous classes/cohorts of users, or true production-scale concurrency.
+Public internet-facing deployment, CDN video delivery, or DRM — local/private network testing is sufficient.
+Any integration with real Netflix (or any other real company's) infrastructure, accounts, catalog, or user data.
+Generative rewriting of video, audio, or open-ended narrative content — all content variations must come from a small, pre-authored, pre-approved set you define (see Section 2's callout).
+A mobile native app — a responsive web client is sufficient.
+Payment, billing, or subscription-tier functionality.
+Building your own large language model — using a hosted or open-source model/API for the retrieval-grounded Q&A feature is expected and appropriate.
+NOTE: If you're ever unsure whether something is in scope, default to the smallest version that still satisfies the acceptance criteria in Section 6, get one end-to-end slice working, and expand from there. Document any deliberate scope decision and the reasoning behind it, per Section 13.2.
+4.3 Project Track Options: Full-Stack or Backend-Only
+This specification supports two valid delivery tracks. Choose one at the start of Week 1 and state your choice in your README — the core backend requirements in Sections 6, 7, 9, and 10 are identical either way.
+Track A — Full-Stack (Default)
+Includes the complete React client described throughout this document: synchronized video player, Watch Room UI, dashboard, and recommendation rails.
+All deliverables and evidence in Sections 12 and 13 apply as written.
+Track B — Backend-Only
+For an intern focused specifically on backend/API/systems engineering. Everything in Sections 6, 7, 9, and 10 still applies in full — the only thing that changes is that no React (or any) UI is required.
+Prove every functional requirement (Epics 1–3) through automated integration tests, a documented Postman/HTTP client collection, and a scripted WebSocket test client instead of a browser UI.
+Simulate multi-participant synchronized playback using two or more scripted WebSocket clients (e.g., a small Node.js or Python test harness) that join the same Watch Space and exchange playback/chat/AI events exactly as a real client would.
+The AI Co-Pilot Q&A, trivia triggering, and variation-voting flows must be demonstrable purely through API/WebSocket calls and their JSON responses.
+The recommendation engine and dashboard analytics must be exposed as REST endpoints returning the same data a UI would render, with results shown via API responses rather than rendered screens.
+Deliverables and evidence (Sections 12–13) are the same, except every UI-based demo requirement is replaced by its equivalent API/WebSocket-based demo (e.g., a terminal recording or script output instead of a screen recording of two browser tabs).
+NOTE: Backend-Only does not mean a smaller project — the real-time gateway, AI Content Engine, data modeling, security, and performance requirements are identical in depth. It only removes the frontend implementation, so choose it based on which skills you want to demonstrate, not to reduce scope.
+5. User Personas & Core User Journeys
+5.1 Persona: The Host
+A registered user who creates and owns a Social Watch Space. The Host selects the title, configures room settings (privacy, max participants, AI co-pilot verbosity), controls master playback, and can moderate the session (mute chat, remove participants, lock the room).
+Host Journey
+Logs in and selects a title from the catalog.
+Creates a new Watch Space and configures room name, privacy (public link / invite-only), and AI co-pilot settings.
+Shares an invite link or code with participants.
+Starts playback once participants have joined; the Host's play/pause/seek actions drive the authoritative room state.
+Can pin an AI-generated fact, trigger an on-demand trivia round, or approve a suggested localized asset variant mid-session.
+Ends the session; the system persists a session summary and analytics snapshot.
+5.2 Persona: The Participant
+A registered user who joins an existing Watch Space via invite link or code. Playback is mirrored from the Host in near real time. Participants can chat, react, ask the AI co-pilot questions, and (if enabled by the Host) vote on optional minor narrative or localization choices.
+Participant Journey
+Receives or opens an invite link and authenticates.
+Joins the room; client performs an initial time-sync handshake against the authoritative room clock before starting playback.
+Watches in sync with the group while chatting and reacting in a shared side panel.
+Asks the AI co-pilot a natural-language question ("who is this character?") and receives a contextual answer without leaving the room.
+Optionally votes on an AI-suggested minor content variation (e.g., an alternate subtitle joke localization) when the Host has enabled group voting.
+Leaves the room at any time; can rejoin and resynchronize automatically.
+5.3 Persona: The AI Co-Pilot System
+Not a human user, but a first-class system actor. The AI Co-Pilot is a service-level persona that:
+Continuously ingests the current video timestamp and a pre-indexed content metadata track (scene markers, character appearances, trivia entries, glossary terms) for the title being watched.
+Listens for viewer questions submitted through the room's AI chat channel and generates grounded, context-aware answers using retrieval over the title's metadata rather than open-ended free-association.
+Proactively surfaces relevant trivia/context cards at scene boundaries when enabled by the Host.
+Evaluates eligible, pre-approved content variation rules (subtitle language packs, regional asset swaps, optional minor branch points) and offers them to the Host/participants without ever altering the core narrative outside pre-authored, approved variation points.
+NOTE: The AI Co-Pilot only ever selects among pre-authored, pre-approved content variations that you define as project data (e.g., 3 alternate subtitle phrasings for a joke, 2 alternate B-roll inserts). It does not generatively rewrite video or invent new plot content — this keeps the scope achievable in four weeks and keeps the system's behavior predictable and testable.
+6. Functional Requirements (Epic & Feature Breakdown)
+6.1 Epic 1 — Real-Time Synchronized Video Playback & Chat Room
+Goal: Any participant who joins a Watch Space sees the same frame, at the same time, within a tight tolerance, and can communicate with the group with negligible lag.
+Features
+Room creation, invite-link/code generation, and join flow with capacity limits.
+Authoritative playback state machine (playing / paused / seeking / buffering) owned by the Host's client and broadcast to all participants over WebSockets.
+Client-side drift correction: each participant client periodically reports its local playback position; the server computes drift and issues gentle micro-seek corrections rather than jarring hard seeks.
+Real-time text chat with typing indicators, emoji reactions, and message history persisted per session.
+Presence system showing who is currently in the room, connection quality indicator, and reconnect/resync handling on network drops.
+Host moderation controls: mute participant, remove participant, lock room, transfer host role.
+Acceptance Criteria
+A new participant joining mid-playback is synchronized to within 250ms of the Host's position within 2 seconds of connecting.
+A Host pause/seek action is reflected on all connected clients within 1 second under normal local-network test conditions.
+Chat messages are delivered to all room members in order and persisted so a reconnecting client can retrieve recent history.
+If the Host disconnects, the room enters a clearly indicated "host disconnected" state and either promotes a new host or pauses playback for all participants — this behavior must be deterministic and tested.
+6.2 Epic 2 — Live AI Content Engine
+Goal: As the video plays, the system continuously knows "where" the group is in the story and can answer questions, surface facts, and offer approved content variations tied to that exact moment.
+Features
+Content metadata ingestion pipeline: a per-title JSON/YAML timeline you author yourself, containing scene markers, character-appearance windows, trivia entries, glossary terms, and variation points, each keyed to a timestamp range.
+Timeline-aware trivia engine: as playback timestamp crosses a marker, the AI engine surfaces a relevant trivia/context card to the room (toggleable by the Host).
+Conversational Q&A: a chat-style interface where a participant asks a natural-language question; the backend retrieves the most relevant metadata entries for the current and preceding timestamps (retrieval-augmented generation, not open-ended free chat) and returns a grounded answer with a short explanation of which timeline entry it drew from.
+Dynamic subtitle/localization layer: subtitle tracks are modeled as swappable, versioned assets; the engine can present an alternate localized phrasing for a specific line when a viewer's locale preference and an authored alternate exist.
+Narrative-variation voting: for pre-authored optional variation points (e.g., an alternate ending line, an alternate minor scene insert), the Host can trigger a timed group vote; the AI engine tallies votes and applies the winning variation for all participants at the correct playback point.
+Acceptance Criteria
+A trivia card appears within 1 second of crossing its authored timestamp marker for at least 95% of markers in your test title.
+A Q&A answer is grounded: the response must cite (in its payload) which metadata entry/entries it used, and must not fabricate facts absent from the ingested metadata for that title.
+Subtitle variation swap does not interrupt playback or desync the room.
+A narrative-variation vote result is applied identically and simultaneously to all connected clients.
+6.3 Epic 3 — User Dashboard & Recommendation Analytics
+Goal: Outside of an active watch session, users have a home base that shows their history, personalized recommendations, and basic analytics about their watch habits and past Watch Spaces.
+Features
+Personal dashboard: recently watched titles, upcoming scheduled Watch Spaces, and quick-rejoin for active rooms.
+Recommendation engine: a hybrid content-based + collaborative-filtering model trained on your own generated interaction dataset (ratings, watch completion, genre affinity, co-watch patterns) producing a ranked "Recommended for You" rail.
+Session analytics: for each past Watch Space, show duration, peak concurrent participants, number of AI questions asked, number of trivia cards surfaced, and chat activity volume.
+Admin/creator-facing content management view: ability to upload a title's metadata timeline (scene markers, trivia, variation points) through a simple authenticated interface rather than editing raw files.
+Acceptance Criteria
+Recommendation rail updates when new interaction data is recorded, without requiring a full model retrain-and-redeploy cycle during a normal review (an offline/batch retrain job is acceptable).
+Session analytics numbers reconcile exactly with the underlying event log for at least one fully manually verified test session.
+A non-engineer-friendly metadata upload form validates timeline JSON/YAML against a documented schema and rejects malformed uploads with a clear error message.
+7. System Architecture & Data Modeling
+7.1 Conceptual Architecture
+The system is composed of five cooperating layers. This layout is deliberately stack-agnostic — it is realized identically whether you choose the Java, MERN, or Python implementation path in Section 9.
+┌─────────────────────────────────────────────────────────────────┐│  CLIENT (React SPA)                                                ││   • Video player (HTML5 video + custom sync controller)           ││   • Watch Room UI (chat, presence, AI co-pilot panel)              ││   • Dashboard & recommendation rails                               │└───────────────┬───────────────────────────────┬───────────────────┘                │ REST (HTTPS/JSON)              │ WebSocket (real-time)                ▼                                ▼┌───────────────────────────────┐   ┌─────────────────────────────────┐│  APPLICATION API LAYER          │   │  REAL-TIME SYNC & EVENT GATEWAY   ││  Auth, catalog, users,          │   │  Room state machine, playback     ││  recommendations, reporting     │   │  broadcast, chat fan-out          │└───────────────┬────────────────┘   └────────────────┬─────────────────┘                │                                       │                ▼                                       ▼┌─────────────────────────────────────────────────────────────────┐│  AI CONTENT ENGINE (service or module)                            ││   • Timeline ingestion & indexing                                  ││   • Retrieval-augmented Q&A over per-title metadata                ││   • Trivia/context trigger scheduler                               ││   • Variation-point evaluator (subtitles / regional assets)       │└───────────────┬─────────────────────────────────────────────────┘                ▼┌─────────────────────────────────────────────────────────────────┐│  PERSISTENCE LAYER                                                 ││   • Primary datastore (PostgreSQL or MongoDB — see Section 7.2)   ││   • Object storage for subtitle/asset variants (local disk or     ││     an S3-compatible store for the project)                       │└─────────────────────────────────────────────────────────────────┘
+7.2 Database Schema
+Design your schema around six core entities: User, Title, WatchSpace (room), TimelineEvent, ChatMessage, and Interaction. Below is a reference mapping for both a document store and a relational store; use whichever matches your chosen stack from Section 9.
+7.2.1 Document Model (MongoDB)
+// users{ _id, email, displayName, passwordHash, role, preferences: { subtitleLocale, genreAffinity: [] }, createdAt } // titles{ _id, name, durationSeconds, genres: [], videoAssetUrl,  timeline: [                       // embedded — read together as one document    { ts: 812, type: 'trivia', text: '...', characterId: 'c_02' },    { ts: 1500, type: 'variationPoint', variationId: 'v_01',      options: [ { id:'a', label:'Original line' }, { id:'b', label:'Alt. localized line' } ] }  ]} // watch_spaces{ _id, titleId, hostUserId, status, participantIds: [], createdAt, endedAt,  settings: { maxParticipants, aiVerbosity, votingEnabled } } // chat_messages   (or an events collection with a 'type' discriminator){ _id, watchSpaceId, userId, type: 'chat'|'ai_answer'|'system', body, ts, createdAt } // interactions      (feeds the recommendation engine){ _id, userId, titleId, watchedSeconds, completed, rating, coWatchedWith: [userId], createdAt }
+7.2.2 Relational Model (PostgreSQL — for the Java or Python path)
+Table
+Key Columns
+Notes
+users
+id PK, email UNIQUE, password_hash, display_name, role, subtitle_locale
+role ∈ {viewer, host, admin}
+titles
+id PK, name, duration_seconds, video_asset_url
+One row per piece of content
+timeline_events
+id PK, title_id FK, ts_seconds, event_type, payload JSONB
+event_type ∈ {trivia, character, variation_point, glossary}
+variation_options
+id PK, timeline_event_id FK, label, asset_ref, vote_count
+1..N options per variation-point event
+watch_spaces
+id PK, title_id FK, host_user_id FK, status, max_participants, ai_verbosity, voting_enabled, created_at, ended_at
+status ∈ {scheduled, live, ended}
+watch_space_participants
+watch_space_id FK, user_id FK, joined_at, left_at
+Composite PK; join table
+chat_messages
+id PK, watch_space_id FK, user_id FK (nullable for AI/system), msg_type, body, ts_seconds, created_at
+msg_type ∈ {chat, ai_answer, system}
+interactions
+id PK, user_id FK, title_id FK, watched_seconds, completed BOOL, rating SMALLINT, created_at
+Feeds recommendation model training
+
+Design guidance: keep timeline_events normalized in the relational path (one row per event, JSONB payload for type-specific fields) so the AI Content Engine can query "give me all events between ts=X and ts=Y" with a simple range index, rather than parsing an embedded blob on every request.
+7.3 API Specifications
+The exact route naming is your decision; the following three endpoints are mandatory examples that any of the three stack choices must implement equivalently.
+7.3.1 POST /api/v1/watch-spaces
+Creates a new Watch Space for a title. Called by the Host.
+Request:{  "titleId": "t_1001",  "maxParticipants": 25,  "aiVerbosity": "normal",       // "minimal" | "normal" | "chatty"  "votingEnabled": true} Response 201:{  "watchSpaceId": "ws_88231",  "inviteCode": "NX-4Q7K",  "status": "scheduled",  "hostUserId": "u_501",  "createdAt": "2026-09-18T10:15:00Z"}
+7.3.2 GET /api/v1/titles/{titleId}/timeline?from={sec}&to={sec}
+Returns timeline events (trivia, character, variation points) for a title within a timestamp range. Used by the AI Content Engine to hydrate the co-pilot as playback advances.
+Response 200:{  "titleId": "t_1001",  "events": [    { "ts": 812, "type": "trivia", "text": "This scene was filmed on location." },    { "ts": 1500, "type": "variationPoint", "variationId": "v_01",      "options": [        { "id": "a", "label": "Original line" },        { "id": "b", "label": "Alternate localized line" }      ]    }  ]}
+7.3.3 POST /api/v1/watch-spaces/{id}/ai/ask
+Submits a participant's natural-language question to the AI Co-Pilot for the current timestamp.
+Request:{  "userId": "u_733",  "currentTs": 1487,  "question": "Who is the character that just walked in?"} Response 200:{  "answer": "That's Detective Rios, first introduced at 00:04:12. He's the              victim's former partner.",  "sourceEvents": [ "evt_2291", "evt_2276" ],  "generatedAt": "2026-09-18T10:24:47Z"}
+7.3.4 WebSocket Event Structure
+A single namespaced socket connection per Watch Space carries all real-time traffic. All events share an envelope shape:
+{ "event": "<event.name>", "watchSpaceId": "ws_88231", "payload": { ... }, "ts": 1690000000123 } Core event names:  room.playback.update     { state: 'play'|'pause'|'seek', positionSeconds, issuedBy }  room.presence.update     { participantId, action: 'joined'|'left', participantCount }  room.chat.message        { messageId, userId, body, tsSeconds }  room.ai.trivia           { eventId, text, tsSeconds }  room.ai.answer           { questionId, userId, answer, sourceEvents }  room.variation.voteOpen  { variationId, options, closesAt }  room.variation.applied   { variationId, winningOptionId }  room.sync.ping / room.sync.pong   { clientSentAt, serverReceivedAt }   // drift measurement
+8. Technology Stack
+Choose exactly one full row below and build the entire system on it. Section 9 gives detailed implementation guidance for whichever row you pick.
+Layer
+Option A — Java
+Option B — MERN
+Option C — Python
+Frontend
+React
+React
+React
+Backend Framework
+Spring Boot
+Express.js (Node.js)
+FastAPI or Django
+Real-Time Layer
+Spring WebFlux (reactive WebSockets)
+Socket.io
+Native WebSockets (FastAPI) or Django Channels
+Database
+PostgreSQL or MongoDB
+MongoDB (required)
+PostgreSQL or MongoDB
+ORM / Data Access
+JPA/Hibernate or Spring Data MongoDB
+Mongoose
+SQLAlchemy / asyncpg, or Motor/PyMongo
+Auth
+Spring Security + JWT
+Custom middleware + JWT (e.g. jsonwebtoken)
+OAuth2/JWT via FastAPI security utils, or Django auth
+Language
+Java
+JavaScript (not TypeScript)
+Python
+
+8.1 Shared Supporting Tools (Any Stack)
+Version control: Git, with a remote repository (GitHub/GitLab/Bitbucket).
+API testing: Postman or an equivalent HTTP client, kept alongside your repo as a shareable collection if possible.
+Containerization (recommended, not mandatory): Docker/Docker Compose so the whole system can be brought up with one command.
+Testing frameworks: JUnit/Mockito (Java), Jest/Supertest (MERN), or Pytest (Python) — pick the one matching your stack.
+AI/LLM access: any hosted API or local open-source model capable of grounded, retrieval-based Q&A is acceptable; document which one you used and why.
+9. Tech Stack Implementation Guide (The Guidance Matrix)
+Pick exactly one of the three stacks below and build the entire system on it. Every functional requirement, API contract, and WebSocket event in Sections 3 and 4 must be identical regardless of which stack you choose — only the implementation technique changes.
+9.1 Option A — Java Full-Stack (Spring Boot + Spring WebFlux + React)
+Use Spring Boot for the REST API layer (controllers, service layer, JPA/Hibernate repositories against PostgreSQL, or Spring Data MongoDB if you prefer the document model).
+Use Spring WebFlux with reactive WebSocket handlers for the real-time gateway — model the room state machine as a reactive Sink/Flux per room so playback and presence events are pushed to all subscribed sessions without blocking threads.
+Keep the AI Content Engine as its own Spring service (or a separate lightweight microservice) that the WebFlux gateway calls internally; this keeps timeline retrieval and Q&A logic testable in isolation from socket plumbing.
+Use connection pooling (HikariCP, default in Spring Boot) tuned for the number of concurrent rooms you expect in local testing; avoid opening a new DB connection per WebSocket message — batch/aggregate writes (e.g., chat history) instead.
+Use Spring Security with JWT for stateless authentication so the WebSocket handshake can validate the same token used by the REST API.
+9.2 Option B — MERN Full-Stack (MongoDB + Express.js + React + Node.js/Socket.io)
+This option uses JavaScript (not TypeScript) across the stack — Node.js, Express, and React.
+Model Title, WatchSpace, and Interaction as Mongoose schemas; embed the per-title timeline array directly on the Title document (Section 7.2.1) since it is read as a whole far more often than it is partially updated.
+Use Socket.io namespaces or rooms (one Socket.io room per watchSpaceId) to scope playback/chat broadcasts; use the built-in rooms API rather than manually tracking socket lists.
+Run the AI Content Engine as a set of plain Node service modules invoked from both the Express REST controllers and the Socket.io event handlers, so timeline lookups and Q&A retrieval logic are written once and shared.
+Since MongoDB is a strict requirement for this option, use MongoDB change streams (or a simple polling fallback) if you want variation-vote tallies or presence counts to update reactively without every write going through the socket layer manually.
+Use a connection-pooled Mongoose client shared across the Express app and the Socket.io server (do not create two separate database connections for the two entry points).
+9.3 Option C — Python Full-Stack (FastAPI/Django + WebSockets + React)
+Use FastAPI for the REST layer with Pydantic models mirroring the API payloads in Section 7.3, and SQLAlchemy (PostgreSQL) or Motor/PyMongo (MongoDB) for persistence — either is acceptable for this option.
+Use FastAPI's native WebSocket support (or Django Channels if you choose Django) with an in-memory ConnectionManager keyed by watchSpaceId to fan out playback/chat events to all sockets in a room.
+Because Python's default WebSocket handling is single-process, either run a single worker for the real-time gateway during local development, or introduce a lightweight pub/sub layer (e.g., Redis pub/sub) if you want to test multi-process fan-out — this is a good optional stretch goal, not a Week-1 requirement.
+Structure the AI Content Engine as its own FastAPI router/service module with clear function boundaries (ingest_timeline, retrieve_context, generate_answer, evaluate_variation) so it can be unit-tested without a live socket connection.
+Use async database drivers (asyncpg / Motor) throughout the WebSocket path to avoid blocking the event loop during high-frequency playback-sync messages.
+9.4 Cross-Stack Guidance: Handling Real-Time Traffic and DB Load
+Never write every single playback-sync heartbeat to the database. Keep authoritative playback position in memory (per room) and only persist coarse-grained session summaries (start time, end time, peak participants) when a session ends.
+Batch chat message writes if volume is high in testing (e.g., write every 2 seconds or every 20 messages, whichever comes first) rather than one write per message, to keep the persistence layer from becoming the bottleneck under your own load tests.
+Whichever stack you pick, keep the WebSocket/real-time layer and the AI Content Engine logically separate modules/services, even if they run in the same process for this project's scope — this separation is what would let a future team scale them independently.
+10. Non-Functional Requirements
+10.1 Security
+All authenticated endpoints require a valid JWT issued at login; tokens must be short-lived (≤ 1 hour) with a refresh-token flow.
+Role-Based Access Control (RBAC) with at minimum three roles: viewer, host, admin. Admin-only actions (title/timeline management) must be rejected server-side for non-admin tokens, not just hidden in the UI.
+WebSocket connections must be authenticated at handshake time using the same JWT, and re-validated on room-sensitive actions (e.g., only the current Host's token may issue a room.playback.update event).
+All user input (chat messages, AI questions, metadata uploads) must be validated and sanitized server-side to prevent injection attacks and stored XSS in chat history.
+Secrets (DB credentials, JWT signing key) must be provided via environment variables, never committed to source control.
+10.2 Scalability & Performance
+Dimension
+Target
+API latency (P95, non-AI endpoints)
+< 200 ms
+AI Co-Pilot answer latency (P95)
+< 3 seconds
+Playback synchronization window
+< 100 ms drift target between clients under good network conditions; < 250 ms acceptable ceiling
+WebSocket message fan-out (per room)
+< 500 ms from server receipt to last client delivery, for rooms up to design capacity
+Concurrent rooms (design target)
+Architecture should not hard-code a single-room assumption anywhere — design for many concurrent rooms even if you load-test only a handful
+
+10.3 Reliability & Observability
+Structured logging for every WebSocket room event and every AI Co-Pilot request/response (excluding sensitive fields), with a correlation ID per watch session.
+Graceful reconnect handling: a client that drops and reconnects within a short window should resume its session without losing chat context or triggering a duplicate join event.
+Basic health-check endpoints for the API layer and the real-time gateway suitable for a container orchestrator or uptime check.
+11. Four-Week Delivery Plan
+This project is scoped for one engineer working solo. The plan below assumes focused full-time effort; adjust proportionally if working part-time, but keep the same order of milestones.
+11.1 Weekly Checkpoints
+Week 1 — Foundation
+Stack chosen and repository scaffolded (client, API, real-time gateway, database).
+Auth (register/login, JWT) working end-to-end.
+Database schema created and migrated; one sample Title with a hand-authored timeline seeded.
+A Watch Space can be created and joined by two browser tabs with basic play/pause sync working.
+Week 2 — Core Real-Time & AI Engine
+Full playback state machine with drift correction implemented and tested with 3+ simultaneous clients.
+Chat and presence fully working, including reconnect handling.
+Timeline ingestion pipeline complete; trivia cards fire correctly at authored markers.
+AI Q&A endpoint returns grounded answers using retrieval over the timeline for at least one full test title.
+Week 3 — Personalization & Dashboard
+Subtitle/localization variation swap and narrative-variation voting fully functional.
+Recommendation engine trained on a self-generated interaction dataset and serving a ranked rail.
+User dashboard complete: history, recommendations, quick-rejoin, session analytics.
+Admin metadata-upload interface functional with schema validation.
+Week 4 — Hardening, Testing & Documentation
+Automated tests written for the playback state machine, AI retrieval logic, and RBAC rules.
+Load-test the real-time gateway locally with a scripted multi-client simulation; record drift and latency numbers against Section 10.2 targets.
+Security pass: verify RBAC enforcement, input validation, and that no secrets are hardcoded.
+Final documentation written (architecture overview, setup guide, API reference, known limitations) and a short recorded walkthrough of a live Watch Space session.
+11.2 Recommended Daily Workflow
+Read the relevant requirement section fully before writing code against it.
+Build vertically: get one thin end-to-end slice (e.g., one event type, one API call) working before broadening.
+Write a quick manual or automated test for each feature immediately after building it, not at the end of the week.
+Commit working increments to version control with clear messages; do not batch a week of work into one commit.
+At the end of each day, note what's done, what's blocked, and the next concrete task.
+12. Required Deliverables & Evidence to Submit
+At the end of the four weeks, submit the artifacts below. These are what will actually be reviewed — treat this list as your packing list for Week 4, not a last-day scramble.
+12.1 Required Deliverables
+☐  Source code repository (Git) with a clear, incremental commit history — not one final "add project" commit.
+☐  README with setup and run instructions specific to your chosen stack (Section 8/9).
+☐  Architecture overview document, extending Section 7, reflecting what was actually built.
+☐  Full API reference covering every implemented REST endpoint and every WebSocket event, with example payloads.
+☐  Database schema or ER diagram matching the shipped system, not just the reference design in Section 7.2.
+☐  Seed/sample data or a script that generates it — at minimum one fully authored test title with a timeline.
+☐  Automated test suite covering the playback state machine, AI retrieval logic, and RBAC, per Section 10.
+☐  A short written retrospective: what was built, what was descoped and why, and what you'd do next with more time.
+12.2 Evidence to Submit
+Alongside the deliverables above, include concrete evidence that the system actually works end-to-end — not just that the code compiles.
+☐  Screenshots or a short recording of two or more browser sessions in the same Watch Space, playing back in sync.
+☐  A recorded or live demo of at least one full AI Co-Pilot Q&A exchange, showing the grounded answer and its source timeline entries.
+☐  A recorded or live demo of one subtitle/localization variation swap and one narrative-variation group vote being applied.
+☐  A screenshot or export of your recommendation rail alongside the interaction data that produced it.
+☐  Test run output/report showing which automated tests exist and that they pass.
+☐  Measured performance numbers for sync drift, API latency, and AI response latency, compared against the targets in Section 10.2.
+☐  Evidence that RBAC is enforced server-side (e.g., a rejected request when a viewer token attempts an admin/host-only action).
+13. Definition of Done
+☐  User registration, login, and JWT-based auth are fully functional.
+☐  A Host can create a Watch Space and share a working invite link/code.
+☐  Playback stays synchronized across all participants within the target drift window.
+☐  Real-time chat, presence, and reconnect handling all work correctly.
+☐  The AI Content Engine surfaces timeline-accurate trivia and answers grounded participant questions.
+☐  At least one subtitle/localization variation and one narrative-variation vote are fully functional end-to-end.
+☐  The recommendation engine serves a ranked, personalized rail driven by real interaction data you generated.
+☐  The user dashboard and admin metadata-upload interface are both functional against real backend data.
+☐  RBAC is enforced server-side for all admin/host-restricted actions.
+☐  Automated tests exist for the playback state machine, AI retrieval logic, and access control.
+☐  Performance numbers for sync drift, API latency, and AI response time have been measured and recorded against Section 10.2.
+☐  Complete documentation exists (architecture overview, setup/run guide, API reference) sufficient for another engineer to run the system from scratch.
+13.1 Final Submission Checklist
+☐  Source repository with a clear commit history showing incremental development.
+☐  README with setup and run instructions for your chosen stack.
+☐  Architecture overview document (can be an extension of Section 7).
+☐  API reference covering all implemented endpoints and WebSocket events.
+☐  Database schema / ER diagram matching what was actually built.
+☐  Test report summarizing what was tested and the results.
+☐  Recorded walkthrough or live demo of a multi-participant Watch Space session, including at least one AI Q&A exchange and one variation vote.
+☐  Short written retrospective: what was built, what was descoped, and what you'd do with more time.
+13.2 Working Guidelines
+Do not wait for a fully-formed plan before starting — scaffold the system first, then build features incrementally against Section 6.
+Prioritize one fully working end-to-end slice (auth → create room → join → sync playback) before adding AI features on top of it.
+Document any deviation from this specification and the reasoning behind it.
+Treat performance targets in Section 10.2 as things to measure and report on, not just implied goals — include your actual numbers in the final documentation.
+Never hardcode secrets; use environment variables from day one.
+14. Assumptions & Constraints
+14.1 Assumptions You Can Safely Make
+You do not need real, licensed video content. Short sample clips, placeholder videos, or your own recordings are fine — the system must handle them correctly, but their source doesn't matter.
+One fully worked-out test title (with a complete timeline of trivia, variation points, and glossary entries) is sufficient to prove the AI Content Engine works; a second or third title strengthens your submission but is not mandatory.
+"AI" for the Q&A and grounded-answer feature can mean a call to any hosted LLM API or a local open-source model — you are not expected to train a model from scratch.
+Concurrency targets (Section 10.2) describe the design intent, not something you must load-test at full scale on personal hardware — a smaller, honestly-reported test (e.g., 5–10 simulated clients) is acceptable as long as the architecture doesn't hard-code a lower ceiling.
+You may run the entire system on a single machine (including the database) for development and demonstration — this is not expected to be a distributed deployment.
+14.2 Constraints You Must Respect
+Pick exactly one stack from Section 8 and build the entire system on it — do not mix backend frameworks across layers.
+All content variations (subtitles, narrative branches) must come from a small, pre-authored, pre-approved set you define yourself — never generated live by an AI model at watch time (see Section 2's callout and Section 4.2's out-of-scope note).
+Secrets and credentials must never be committed to your repository, in any commit, at any point in its history.
+The four-week timeline is fixed. If you're behind schedule, cut scope (fewer variation points, a simpler recommendation model) rather than skipping testing or documentation — an honestly-scoped, well-tested system beats a feature-complete, undocumented one.
+15. Suggested Evaluation Rubric
+This is what a reviewer will actually be checking at the end of Week 4. Use it as a self-check throughout the project, not just before submission.
+15.1 What Evaluators Will Look For
+Does the system actually work end-to-end, live, rather than only looking complete in a code review?
+Can two or more browser sessions genuinely stay in sync during real playback, including after a pause, seek, or reconnect?
+Is the AI Co-Pilot's output actually grounded — does it cite real timeline entries, and does it decline or hedge gracefully when it has no relevant metadata for a question?
+Is access control enforced on the server, not just hidden in the UI?
+Is the database schema sensible, with real keys, constraints, and no unnecessary duplication?
+Are the automated tests meaningful (they'd actually catch a regression) rather than trivial assertions written to pad coverage?
+Are the reported performance numbers real measurements from your own system, not estimates or guesses?
+Could a first-time reader, given only your documentation, get the system running and reproduce one full demo path unaided?
+Where you deviated from this specification, did you document why, and is the reasoning sound?
+15.2 Indicative Weighting
+Area
+Weight
+Real-time sync & chat room (Epic 1)
+25%
+AI Content Engine — grounding, trivia, variations (Epic 2)
+25%
+Dashboard, recommendations & analytics (Epic 3)
+15%
+Architecture, data modeling & API design quality
+15%
+Security, testing & performance evidence
+15%
+Documentation & communication quality
+5%
+
+16. Glossary of Key Terms
+Term
+Meaning in This Project
+Watch Space
+A single synchronized group viewing room created by a Host and joined by Participants.
+Host
+The user who owns a Watch Space and whose playback actions drive the authoritative room state.
+Participant
+A user who has joined an existing Watch Space; their playback mirrors the Host's.
+AI Co-Pilot
+The service-level actor that answers questions, surfaces trivia, and evaluates content variations during a session.
+Drift Correction
+The process of gently nudging a participant's local playback position back in line with the room's authoritative position, without a jarring hard seek.
+Timeline / Timeline Event
+A per-title, timestamp-keyed record (trivia, character appearance, variation point, glossary term) that the AI Content Engine reads to know what's relevant at a given moment.
+Grounded Answer
+An AI-generated response that is backed by, and cites, specific timeline metadata entries rather than being freely generated from general knowledge.
+Variation Point
+A pre-authored moment in a title where two or more approved content options exist (e.g., an alternate subtitle line), which the system can apply based on locale or a group vote.
+RBAC
+Role-Based Access Control — restricting specific actions (e.g., uploading a timeline) to specific roles (e.g., admin), enforced on the server.
+P95 Latency
+The 95th-percentile response time — 95% of requests complete faster than this value, used as a realistic performance target instead of a raw average.
+Retrieval-Augmented Generation (RAG)
+An AI technique where the model's answer is generated using specific retrieved data (here, timeline events) rather than purely from its own general training.
+
