@@ -1,0 +1,16 @@
+{
+  "evaluatedAt": "2026-11-04T16:47:35.798Z",
+  "method": "hybrid-content-cf",
+  "weights": {
+    "content": 0.6,
+    "collaborative": 0.35,
+    "popularity": 0.05
+  },
+  "catalogueItems": 6,
+  "interactions": 27,
+  "users": 9,
+  "evaluatedUsers": 9,
+  "precisionAt5": 1,
+  "recallAt5": 1,
+  "buildMs": 83
+}

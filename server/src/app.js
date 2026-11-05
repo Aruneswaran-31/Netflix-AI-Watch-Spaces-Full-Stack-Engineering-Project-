@@ -42,6 +42,21 @@ function createApp() {
   app.use(compression());
   app.use(express.json({ limit: '512kb' }));
 
+  // Sample media is served from the API origin so playback works offline and on
+  // networks that block the upstream open-film hosts. express.static answers
+  // Range requests, which the browser needs before it can seek.
+  app.use(
+    '/api/v1/media',
+    express.static(path.resolve(__dirname, '../public/media'), {
+      maxAge: '1h',
+      setHeaders(res) {
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      },
+    })
+  );
+  app.use('/api/v1/media', notFoundHandler);
+
   app.use((req, res, next) => {
     req.id = req.headers['x-request-id'] || randomUUID();
     res.setHeader('X-Request-Id', req.id);

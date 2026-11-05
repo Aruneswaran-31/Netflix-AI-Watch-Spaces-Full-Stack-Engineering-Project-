@@ -56,6 +56,9 @@ const titleSchema = new mongoose.Schema(
     durationSeconds: { type: Number, required: true, min: 1 },
     genres: { type: [String], default: [], index: true },
     videoAssetUrl: { type: String, required: true },
+    // Local copy played when the upstream host is unreachable (blocked network,
+    // offline demo). Kept short on purpose so it always loads.
+    fallbackAssetUrl: { type: String, default: '' },
     posterUrl: { type: String, default: '' },
     accentColor: { type: String, default: '#e50914' },
     license: { type: String, default: '' },
@@ -82,6 +85,7 @@ titleSchema.methods.toPublic = function toPublic() {
     durationSeconds: this.durationSeconds,
     genres: this.genres,
     videoAssetUrl: this.videoAssetUrl,
+    fallbackAssetUrl: this.fallbackAssetUrl,
     posterUrl: this.posterUrl,
     accentColor: this.accentColor,
     license: this.license,

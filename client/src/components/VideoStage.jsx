@@ -35,10 +35,13 @@ export default function VideoStage({
   const [driftMs, setDriftMs] = useState(0);
   const [blocked, setBlocked] = useState(false);
   const [mediaError, setMediaError] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
   const [muted, setMuted] = useState(false);
+  const fallbackRef = useRef(false);
 
   playbackRef.current = playback;
   hostRef.current = isHost;
+  fallbackRef.current = usingFallback;
 
   const targetPosition = useCallback(() => {
     const state = playbackRef.current;
@@ -58,7 +61,10 @@ export default function VideoStage({
       lastTargetRef.current = target;
 
       const drift = Math.abs(video.currentTime - target) * 1000;
-      const shouldSeek = force || drift > 700;
+      // A fallback sample is far shorter than the authored timeline, so seeking it
+      // to the room clock would just slam into the end. It loops instead and the
+      // clock keeps running from the server snapshot.
+      const shouldSeek = !fallbackRef.current && (force || drift > 700);
       if (shouldSeek && Number.isFinite(target)) {
         applyingRef.current = true;
         try {
@@ -85,6 +91,51 @@ export default function VideoStage({
     },
     [targetPosition, title?.durationSeconds]
   );
+
+  /**
+   * Switch to the title's local sample when the upstream host cannot deliver the
+   * film (blocked ISP, offline demo, dead CDN). Playback, trivia and the co-pilot
+   * keep running; only the picture changes.
+   */
+  const useFallbackAsset = useCallback(() => {
+    if (fallbackRef.current) {
+      setMediaError(true);
+      return false;
+    }
+    const fallback = title?.fallbackAssetUrl;
+    if (!fallback) {
+      setMediaError(true);
+      return false;
+    }
+    fallbackRef.current = true;
+    setUsingFallback(true);
+    setBlocked(false);
+    return true;
+  }, [title?.fallbackAssetUrl]);
+
+  const handleMediaError = useCallback(() => {
+    useFallbackAsset();
+  }, [useFallbackAsset]);
+
+  // Watchdog: a host that never answers leaves the element on readyState 0 with
+  // no error event at all, which looks identical to a frozen player.
+  useEffect(() => {
+    if (usingFallback) return undefined;
+    const timer = setTimeout(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      if (video.readyState < 1 && !mediaError) useFallbackAsset();
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [usingFallback, mediaError, useFallbackAsset, title?.id]);
+
+  // Re-apply the room state once the fallback source has loaded.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.loop = usingFallback;
+    if (usingFallback && playbackRef.current) applyPlayback(playbackRef.current);
+  }, [usingFallback, applyPlayback]);
 
   // Apply every snapshot / remote update.
   useEffect(() => {
@@ -210,7 +261,7 @@ export default function VideoStage({
       <div className="video-wrap" ref={wrapRef}>
         <video
           ref={videoRef}
-          src={title?.videoAssetUrl}
+          src={usingFallback ? title?.fallbackAssetUrl : title?.videoAssetUrl}
           poster={title?.posterUrl || undefined}
           playsInline
           preload="metadata"
@@ -224,7 +275,7 @@ export default function VideoStage({
           }}
           onPlay={() => setPaused(false)}
           onPause={() => setPaused(true)}
-          onError={() => setMediaError(true)}
+          onError={handleMediaError}
           onClick={() => {
             if (isHost) togglePlay();
           }}
@@ -235,8 +286,9 @@ export default function VideoStage({
             <div className="stack" style={{ maxWidth: 360, textAlign: 'center', padding: 20 }}>
               <strong>The sample video could not load.</strong>
               <p className="muted" style={{ fontSize: 13 }}>
-                The open-licensed stream may be blocked by your network. Playback sync, the
-                co-pilot and variation votes still work against the authored timeline.
+                Neither the open-licensed stream nor the bundled sample clip could be loaded.
+                Playback sync, the co-pilot and variation votes still work against the authored
+                timeline.
               </p>
             </div>
           </div>
@@ -283,6 +335,11 @@ export default function VideoStage({
             <span className="dot dot-live" /> {isHost ? 'You are hosting' : 'Synced room'}
           </span>
           {!isHost && <span className="badge">Host controls playback</span>}
+          {usingFallback && (
+            <span className="badge" title="The full film host is unreachable from this network">
+              Sample clip
+            </span>
+          )}
         </div>
 
         <div className="float-layer" aria-hidden="true">

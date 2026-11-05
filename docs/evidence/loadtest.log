@@ -1,0 +1,17 @@
+{
+  "endpoint": "GET /api/v1/dashboard",
+  "requests": 120,
+  "concurrency": 12,
+  "wallMs": 5728,
+  "requestsPerSecond": 20.9,
+  "statuses": {
+    "200": 120
+  },
+  "latencyMs": {
+    "min": 156.7,
+    "p50": 542.4,
+    "p95": 801.2,
+    "p99": 826.3,
+    "max": 871.8
+  }
+}

@@ -13,9 +13,9 @@ cd server && npm test
 ```
 
 ```
-Test Suites: 7 passed, 7 total
-Tests:       54 passed, 54 total
-Time:        32.951 s
+Test Suites: 8 passed, 8 total
+Tests:       59 passed, 59 total
+Time:        24.377 s
 ```
 
 | Suite | What it proves |
@@ -27,6 +27,7 @@ Time:        32.951 s
 | `api.rbac.test.js` (15) | Register/login/refresh/logout, duplicate-account conflict, viewer cannot create a room or open a vote, non-host cannot moderate or end, private rooms hide from non-members, invite codes join correctly, ballots are unique per user, vote tally and winner application, admin-only title editing, 401/403/422 shapes. |
 | `analytics.test.js` (2) | Event-log aggregation, peak-concurrency computation, reconciliation against denormalised counters, observed duration and the live-playback position. |
 | `recommendations.test.js` (5) | Hybrid scoring uses content + collaborative + popularity, unseen titles outrank already-watched ones, reasons are produced, cold-start users still get a sensible rail, and precision@5 computes correctly on a synthetic case. |
+| `media.test.js` (5) | The committed sample clips are served with a `video/mp4` content type, Range requests answer `206` with a `Content-Range` (the browser needs this to seek), unknown assets `404`, every local media reference in the seed resolves to a file that exists, and every full film carries a local fallback. Added after a real defect: the app streamed every title from a third-party host and playback died outright on networks that block it. |
 
 The suite runs against a real Express app (Supertest) and a real MongoDB (`mongodb-memory-server`), not mocks, so routing, JWT auth, Mongoose queries and Socket.io all execute.
 
@@ -49,6 +50,8 @@ Driven in a Chromium session against the Vite client and the real API, signed in
 | Host closes the tab | Pass — the room paused, showed the grace banner, then handed hosting to the longest-present participant and broadcast `room.host.changed`. |
 | Non-member opening an invite-only room URL | Pass — 403 with an invite-code prompt. |
 | Ended room | Pass — join rejected, UI shows the ended state. |
+| Play a room backed by a committed clip | Pass — `The Ridge — Short` streamed from `/api/v1/media/sintel-10s.mp4` through the Vite proxy (`206 Partial Content`), the host's play propagated and the sync pill read **Playing in sync**. |
+| Simulated upstream failure on a full film | Pass — dispatching a media `error` on the Sintel stage replaced the source with the local clip (`duration 10`, `loop`, **Sample clip** badge) and playback resumed in sync instead of leaving a dead stage. |
 
 ## 3. Performance
 
@@ -85,7 +88,8 @@ Perfect precision on a 6-title demo catalogue with synthetic history is a correc
 
 ## 4. Known limitations
 
-- Playback is coordinated, not DRM-protected. The client plays openly licensed MP4s (Sintel, Tears of Steel, Big Buck Bunny) and short authored excerpts; a production Netflix integration would need their player SDK and licence handshake, which is out of scope for a public demo.
+- Playback is coordinated, not DRM-protected. The client plays openly licensed MP4s (Sintel, Big Buck Bunny, Elephants Dream) and committed short excerpts served by the API; a production Netflix integration would need their player SDK and licence handshake, which is out of scope for a public demo.
+- The three full films stream from archive.org, which some ISPs block. The player then falls back to a committed 10-second clip (badge shown), so the timeline features keep working but the picture is not the full film.
 - Socket.io runs in a single process. Horizontal scaling needs the Redis adapter and a shared room clock store; the runtime is isolated in `roomRuntime.js` so that swap is contained.
 - The grounded retriever is an in-process lexical/index hybrid over the authored timeline, sized for a curated catalogue. Larger catalogues want a vector store behind the same `retrieve()` interface.
 - The recommender's collaborative signal is thin at demo scale; it is blended with content and popularity and evaluated offline rather than A/B tested.

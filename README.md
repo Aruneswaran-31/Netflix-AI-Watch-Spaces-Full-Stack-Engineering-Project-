@@ -28,7 +28,7 @@
 - **Socket.io 4** — room state, presence, chat, trivia, votes, playback sync.
 - **MongoDB + Mongoose 8** — users, titles with embedded timelines, rooms, votes, chat, interactions, session events.
 - **React 18 + Vite 5 + React Router 6** — SPA with a custom dark design system.
-- **Jest 29 + Supertest + socket.io-client** — 54 automated tests across 7 suites.
+- **Jest 29 + Supertest + socket.io-client** — 59 automated tests across 8 suites.
 - **No required external services** — with no `MONGODB_URI`, the server starts an embedded `mongodb-memory-server` instance, so `npm install && npm run dev` is enough for a demo.
 
 ---
@@ -63,7 +63,7 @@ The login screen has one-click buttons for these accounts.
 ```bash
 npm run dev          # API + Vite together
 npm run seed         # re-seed (idempotent)
-npm test             # 7 Jest suites, 54 tests
+npm test             # 8 Jest suites, 59 tests
 npm run build        # production SPA build
 npm start            # API, serving client/dist when present
 npm run eval:recs    # leave-one-out recommender report
@@ -142,9 +142,9 @@ The host’s play/pause call happens inside the click gesture so browsers allow 
 Run `npm test` (Jest, Node 20, embedded Mongo):
 
 ```
-Test Suites: 7 passed, 7 total
-Tests:       54 passed, 54 total
-Time:        32.951 s
+Test Suites: 8 passed, 8 total
+Tests:       59 passed, 59 total
+Time:        24.377 s
 ```
 
 Covered: state machine transitions/drift, timeline validation, grounding and refusals, REST RBAC, socket permissions and broadcast, vote tally/apply, host failover, analytics reconciliation, recommender ranking and cache invalidation. Details and manual evidence: [docs/TEST_REPORT.md](docs/TEST_REPORT.md).
@@ -186,7 +186,7 @@ server/
   src/routes/         auth, titles, watchSpaces, engagement, admin, health
   src/sockets/        authenticated Socket.io gateway
   src/seed/           authored catalogue, timelines, demo users/interactions
-  tests/              7 Jest suites (54 tests)
+  tests/              8 Jest suites (59 tests)
   scripts/            seed, recommender evaluation, load test
 docs/                 architecture, API reference, test report, project brief
 ```
@@ -195,11 +195,25 @@ docs/                 architecture, API reference, test report, project brief
 
 ## Media & attribution
 
-All sample films are Blender Foundation open movies released under **Creative Commons Attribution 3.0**: *Sintel* (2010), *Big Buck Bunny* (2008), *Elephants Dream* (2006), streamed from the Internet Archive. Short excerpts come from test-videos.co.uk. The timelines (scene markers, trivia, character notes, glossary, variation options) are authored for this project; timestamps are approximate scene markers, which the brief permits. This is an independent engineering demo and is not affiliated with Netflix.
+All sample films are Blender Foundation open movies released under **Creative Commons Attribution 3.0**: *Sintel* (2010), *Big Buck Bunny* (2008), *Elephants Dream* (2006). The timelines (scene markers, trivia, character notes, glossary, variation options) are authored for this project; timestamps are approximate scene markers, which the brief permits. This is an independent engineering demo and is not affiliated with Netflix.
+
+### How the video actually reaches the browser
+
+Every title has a `videoAssetUrl` and the three short titles also have `fallbackAssetUrl`:
+
+| Title | Primary source | Fallback |
+| --- | --- | --- |
+| The Ridge — Short, Meadow — Short, Drift | `server/public/media/*-10s.mp4` (committed, served by the API at `/api/v1/media/…`) | — |
+| Sintel, Big Buck Bunny, Elephants Dream | the Internet Archive | the matching committed 10-second clip |
+
+The three short clips (~1 MB each) are committed and served from the API origin, so those rooms always play — offline, behind a firewall, on any ISP. The three full films need archive.org, which several networks block; if the film errors *or* delivers no metadata within 8 seconds, the player switches to the local clip automatically, loops it, and shows a **Sample clip** badge while the room clock, trivia, votes and co-pilot keep running off the authored timeline. Sample-clip rate/caption credits: [test-videos.co.uk](https://test-videos.co.uk/).
+
+If a stage still shows nothing, it is a genuine double failure (no upstream and no local file) — check `curl http://localhost:4000/api/v1/media/sintel-10s.mp4`.
 
 ## Limitations
 
 - No DRM or real Netflix catalogue integration; playback uses open-licensed HTTP video.
+- The three full films stream from archive.org. Networks that block it get the bundled 10-second sample clip instead, so the picture is not the full film there (the timeline-driven features are unaffected).
 - Room clocks and timers are process-local (single instance).
 - The co-pilot’s default provider is a deterministic grounded synthesizer; an LLM key is optional and only rephrases retrieved evidence.
 - The recommender is deliberately small and transparent; its perfect leave-one-out score reflects a 6-title demo catalogue.

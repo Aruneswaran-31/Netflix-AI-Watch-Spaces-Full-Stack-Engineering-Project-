@@ -10,15 +10,30 @@
  * triggers on.
  */
 
+/**
+ * Media strategy.
+ *
+ * The three short titles stream from the API's own origin (the clips are
+ * committed under server/public/media) so playback never depends on a third
+ * party. The three full films stay on their upstream open-film host, and each
+ * one carries a `fallbackAssetUrl` pointing at a local clip: if the viewer's
+ * network blocks that host — archive.org is unreachable on several ISPs — the
+ * player switches to the local clip instead of showing a dead stage. Timeline,
+ * trivia and the co-pilot all keep working either way.
+ */
+const LOCAL_MEDIA = '/api/v1/media';
+
 const MEDIA = {
   sintel: 'https://archive.org/download/Sintel/sintel-2048-surround_512kb.mp4',
   bigBuckBunny:
     'https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4',
   elephantsDream: 'https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4',
-  jellyfish: 'https://test-videos.co.uk/vids/jellyfish/mp4/h264/1080/Jellyfish_1080_10s_1MB.mp4',
-  sintelExcerpt: 'https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4',
-  bunnyExcerpt:
-    'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/1080/Big_Buck_Bunny_1080_10s_1MB.mp4',
+  jellyfish: `${LOCAL_MEDIA}/jellyfish-10s.mp4`,
+  sintelExcerpt: `${LOCAL_MEDIA}/sintel-10s.mp4`,
+  bunnyExcerpt: `${LOCAL_MEDIA}/bunny-10s.mp4`,
+  sintelSample: `${LOCAL_MEDIA}/sintel-10s.mp4`,
+  bunnySample: `${LOCAL_MEDIA}/bunny-10s.mp4`,
+  genericSample: `${LOCAL_MEDIA}/jellyfish-10s.mp4`,
 };
 
 const SINTEL_TIMELINE = [
@@ -700,6 +715,7 @@ const TITLES = [
     durationSeconds: 888,
     genres: ['Fantasy', 'Adventure', 'Animation'],
     videoAssetUrl: MEDIA.sintel,
+    fallbackAssetUrl: MEDIA.sintelSample,
     accentColor: '#7f5af0',
     license: 'CC BY 3.0 — Blender Institute',
     timeline: SINTEL_TIMELINE,
@@ -714,6 +730,7 @@ const TITLES = [
     durationSeconds: 596,
     genres: ['Comedy', 'Family', 'Animation'],
     videoAssetUrl: MEDIA.bigBuckBunny,
+    fallbackAssetUrl: MEDIA.bunnySample,
     accentColor: '#2cb67d',
     license: 'CC BY 3.0 — Blender Institute',
     timeline: BUNNY_TIMELINE,
@@ -728,6 +745,7 @@ const TITLES = [
     durationSeconds: 654,
     genres: ['Sci-Fi', 'Experimental', 'Animation'],
     videoAssetUrl: MEDIA.elephantsDream,
+    fallbackAssetUrl: MEDIA.genericSample,
     accentColor: '#f2a33c',
     license: 'CC BY 3.0 — Blender Foundation',
     timeline: ELEPHANTS_TIMELINE,
