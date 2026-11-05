@@ -36,6 +36,20 @@ const MEDIA = {
   genericSample: `${LOCAL_MEDIA}/jellyfish-10s.mp4`,
 };
 
+/**
+ * Poster frames, extracted from the films themselves and committed alongside the
+ * clips. They are served from the API origin for the same reason as the video:
+ * no card should depend on a third-party host being reachable.
+ */
+const POSTERS = {
+  sintel: `${LOCAL_MEDIA}/posters/sintel.jpg`,
+  bigBuckBunny: `${LOCAL_MEDIA}/posters/big-buck-bunny.jpg`,
+  elephantsDream: `${LOCAL_MEDIA}/posters/elephants-dream.jpg`,
+  drift: `${LOCAL_MEDIA}/posters/drift.jpg`,
+  ridgeShort: `${LOCAL_MEDIA}/posters/the-ridge-short.jpg`,
+  meadowShort: `${LOCAL_MEDIA}/posters/meadow-short.jpg`,
+};
+
 const SINTEL_TIMELINE = [
   {
     id: 'st_001',
@@ -716,6 +730,7 @@ const TITLES = [
     genres: ['Fantasy', 'Adventure', 'Animation'],
     videoAssetUrl: MEDIA.sintel,
     fallbackAssetUrl: MEDIA.sintelSample,
+    posterUrl: POSTERS.sintel,
     accentColor: '#7f5af0',
     license: 'CC BY 3.0 — Blender Institute',
     timeline: SINTEL_TIMELINE,
@@ -731,6 +746,7 @@ const TITLES = [
     genres: ['Comedy', 'Family', 'Animation'],
     videoAssetUrl: MEDIA.bigBuckBunny,
     fallbackAssetUrl: MEDIA.bunnySample,
+    posterUrl: POSTERS.bigBuckBunny,
     accentColor: '#2cb67d',
     license: 'CC BY 3.0 — Blender Institute',
     timeline: BUNNY_TIMELINE,
@@ -746,6 +762,7 @@ const TITLES = [
     genres: ['Sci-Fi', 'Experimental', 'Animation'],
     videoAssetUrl: MEDIA.elephantsDream,
     fallbackAssetUrl: MEDIA.genericSample,
+    posterUrl: POSTERS.elephantsDream,
     accentColor: '#f2a33c',
     license: 'CC BY 3.0 — Blender Foundation',
     timeline: ELEPHANTS_TIMELINE,
@@ -759,6 +776,7 @@ const TITLES = [
     durationSeconds: 10,
     genres: ['Documentary', 'Nature', 'Short'],
     videoAssetUrl: MEDIA.jellyfish,
+    posterUrl: POSTERS.drift,
     accentColor: '#3da9fc',
     license: 'Open test asset',
     timeline: DRIFT_TIMELINE,
@@ -773,6 +791,7 @@ const TITLES = [
     durationSeconds: 10,
     genres: ['Fantasy', 'Short', 'Animation'],
     videoAssetUrl: MEDIA.sintelExcerpt,
+    posterUrl: POSTERS.ridgeShort,
     accentColor: '#8ea6ff',
     license: 'CC BY 3.0 — Blender Institute',
     timeline: SINTEL_EXCERPT_TIMELINE,
@@ -787,6 +806,7 @@ const TITLES = [
     durationSeconds: 10,
     genres: ['Comedy', 'Family', 'Short'],
     videoAssetUrl: MEDIA.bunnyExcerpt,
+    posterUrl: POSTERS.meadowShort,
     accentColor: '#7bd88f',
     license: 'CC BY 3.0 — Blender Institute',
     timeline: BUNNY_EXCERPT_TIMELINE,

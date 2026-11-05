@@ -28,7 +28,7 @@
 - **Socket.io 4** — room state, presence, chat, trivia, votes, playback sync.
 - **MongoDB + Mongoose 8** — users, titles with embedded timelines, rooms, votes, chat, interactions, session events.
 - **React 18 + Vite 5 + React Router 6** — SPA with a custom dark design system.
-- **Jest 29 + Supertest + socket.io-client** — 59 automated tests across 8 suites.
+- **Jest 29 + Supertest + socket.io-client** — 60 automated tests across 8 suites.
 - **No required external services** — with no `MONGODB_URI`, the server starts an embedded `mongodb-memory-server` instance, so `npm install && npm run dev` is enough for a demo.
 
 ---
@@ -74,7 +74,7 @@ The login screen has one-click buttons for these accounts.
 ```bash
 npm run dev          # API + Vite together
 npm run seed         # re-seed (idempotent)
-npm test             # 8 Jest suites, 59 tests
+npm test             # 8 Jest suites, 60 tests
 npm run build        # production SPA build
 npm start            # API, serving client/dist when present
 npm run eval:recs    # leave-one-out recommender report
@@ -154,7 +154,7 @@ Run `npm test` (Jest, Node 20, embedded Mongo):
 
 ```
 Test Suites: 8 passed, 8 total
-Tests:       59 passed, 59 total
+Tests:       60 passed, 60 total
 Time:        24.377 s
 ```
 
@@ -197,7 +197,7 @@ server/
   src/routes/         auth, titles, watchSpaces, engagement, admin, health
   src/sockets/        authenticated Socket.io gateway
   src/seed/           authored catalogue, timelines, demo users/interactions
-  tests/              8 Jest suites (59 tests)
+  tests/              8 Jest suites (60 tests)
   scripts/            seed, recommender evaluation, load test
 docs/                 architecture, API reference, test report, project brief
 ```
@@ -216,6 +216,10 @@ Every title has a `videoAssetUrl` and the three short titles also have `fallback
 | --- | --- | --- |
 | The Ridge — Short, Meadow — Short, Drift | `server/public/media/*-10s.mp4` (committed, served by the API at `/api/v1/media/…`) | — |
 | Sintel, Big Buck Bunny, Elephants Dream | the Internet Archive | the matching committed 10-second clip |
+
+Each title also has a poster frame at `server/public/media/posters/<slug>.jpg`, extracted from the film itself and committed, served from the API origin at `/api/v1/media/posters/…`. Cards, room thumbnails and the player's `poster` attribute all use it. It is a deployment fact rather than editorial content, so the seed reconciles poster and media URLs for existing titles on every boot — a database seeded before the posters existed picks them up without a wipe. These were added after the catalogue shipped `posterUrl: ''` and every card rendered a blank tile with just the title's initials.
+
+![Dashboard with poster frames](docs/evidence/dashboard-posters-cards.png)
 
 The three short clips (~1 MB each) are committed and served from the API origin, so those rooms always play — offline, behind a firewall, on any ISP. The three full films need archive.org, which several networks block. The player falls back to the local clip in three cases, because a blocked or throttled host does not always raise an error:
 

@@ -14,7 +14,7 @@ cd server && npm test
 
 ```
 Test Suites: 8 passed, 8 total
-Tests:       59 passed, 59 total
+Tests:       60 passed, 60 total
 Time:        24.377 s
 ```
 
@@ -27,7 +27,7 @@ Time:        24.377 s
 | `api.rbac.test.js` (15) | Register/login/refresh/logout, duplicate-account conflict, viewer cannot create a room or open a vote, non-host cannot moderate or end, private rooms hide from non-members, invite codes join correctly, ballots are unique per user, vote tally and winner application, admin-only title editing, 401/403/422 shapes. |
 | `analytics.test.js` (2) | Event-log aggregation, peak-concurrency computation, reconciliation against denormalised counters, observed duration and the live-playback position. |
 | `recommendations.test.js` (5) | Hybrid scoring uses content + collaborative + popularity, unseen titles outrank already-watched ones, reasons are produced, cold-start users still get a sensible rail, and precision@5 computes correctly on a synthetic case. |
-| `media.test.js` (5) | The committed sample clips are served with a `video/mp4` content type, Range requests answer `206` with a `Content-Range` (the browser needs this to seek), unknown assets `404`, every local media reference in the seed resolves to a file that exists, and every full film carries a local fallback. Added after a real defect: the app streamed every title from a third-party host and playback died outright on networks that block it. |
+| `media.test.js` (6) | The committed sample clips are served with a `video/mp4` content type, Range requests answer `206` with a `Content-Range` (the browser needs this to seek), unknown assets `404`, every local media reference in the seed resolves to a file that exists, every title has a locally served JPEG poster over 4 kB, and every full film carries a local fallback. Added after real defects: the app streamed every title from a third-party host and playback died outright on networks that block it, and the catalogue shipped `posterUrl: ''` so every card rendered a blank tile. |
 
 The suite runs against a real Express app (Supertest) and a real MongoDB (`mongodb-memory-server`), not mocks, so routing, JWT auth, Mongoose queries and Socket.io all execute.
 

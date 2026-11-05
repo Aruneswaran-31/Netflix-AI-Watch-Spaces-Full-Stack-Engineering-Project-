@@ -110,11 +110,36 @@ async function seedDemoRoom(host, viewer, titles) {
 }
 
 /**
+ * Media URLs and poster frames are deployment facts rather than editorial
+ * content: refresh them for existing titles on every boot, so a database seeded
+ * before a poster or clip existed does not keep serving the stale one.
+ */
+async function reconcileCatalogueMedia() {
+  for (const definition of TITLES) {
+    await Title.updateOne(
+      { slug: definition.slug },
+      {
+        $set: {
+          videoAssetUrl: definition.videoAssetUrl,
+          fallbackAssetUrl: definition.fallbackAssetUrl,
+          posterUrl: definition.posterUrl,
+          durationSeconds: definition.durationSeconds,
+          license: definition.license,
+        },
+      }
+    );
+  }
+}
+
+/**
  * Idempotent demo seed. `onlyIfEmpty` makes server bootstrap cheap on restarts.
  */
 async function seedDatabase({ onlyIfEmpty = false } = {}) {
   const titleCount = await Title.countDocuments();
-  if (onlyIfEmpty && titleCount > 0) return false;
+  if (onlyIfEmpty && titleCount > 0) {
+    await reconcileCatalogueMedia();
+    return false;
+  }
 
   const users = await seedUsers();
   const titles = await seedTitles();

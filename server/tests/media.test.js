@@ -52,12 +52,24 @@ describe('bundled sample media', () => {
   it('every local media reference in the seed points at a committed file', () => {
     const mediaDir = path.resolve(__dirname, '../public/media');
     const referenced = TITLES.flatMap((title) =>
-      [title.videoAssetUrl, title.fallbackAssetUrl].filter((url) => url && url.startsWith('/api/v1/media/'))
+      [title.videoAssetUrl, title.fallbackAssetUrl, title.posterUrl].filter(
+        (url) => url && url.startsWith('/api/v1/media/')
+      )
     );
     expect(referenced.length).toBeGreaterThan(0);
     for (const url of referenced) {
       const file = path.join(mediaDir, url.replace('/api/v1/media/', ''));
       expect(fs.existsSync(file)).toBe(true);
+    }
+  });
+
+  it('gives every title a locally served poster and returns it as an image', async () => {
+    for (const title of TITLES) {
+      expect(title.posterUrl).toMatch(/^\/api\/v1\/media\/posters\/.+\.jpg$/);
+      const response = await request(server.app).get(title.posterUrl).buffer(true);
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toMatch(/image\/jpeg/);
+      expect(Number(response.headers['content-length'])).toBeGreaterThan(4000);
     }
   });
 
