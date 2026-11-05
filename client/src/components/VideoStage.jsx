@@ -38,6 +38,8 @@ export default function VideoStage({
   const [usingFallback, setUsingFallback] = useState(false);
   const [muted, setMuted] = useState(false);
   const fallbackRef = useRef(false);
+  const stallTicksRef = useRef(0);
+  const lastClockRef = useRef(0);
 
   playbackRef.current = playback;
   hostRef.current = isHost;
@@ -127,6 +129,31 @@ export default function VideoStage({
       if (video.readyState < 1 && !mediaError) useFallbackAsset();
     }, 8000);
     return () => clearTimeout(timer);
+  }, [usingFallback, mediaError, useFallbackAsset, title?.id]);
+
+  // Stall watchdog: a throttled or partially blocked host can hand over metadata
+  // and a first frame, then never send another byte. That fires no error event,
+  // so the player would sit on a frozen picture forever — the state that reads as
+  // "this video does not play". If the room clock is running and the element is
+  // not advancing, swap to the bundled clip instead of hanging.
+  useEffect(() => {
+    if (usingFallback || mediaError) return undefined;
+    lastClockRef.current = 0;
+    stallTicksRef.current = 0;
+    const interval = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.paused || video.ended) {
+        stallTicksRef.current = 0;
+        lastClockRef.current = video ? video.currentTime : 0;
+        return;
+      }
+      const advanced = video.currentTime > lastClockRef.current + 0.05;
+      lastClockRef.current = video.currentTime;
+      const starved = video.readyState < 3;
+      stallTicksRef.current = advanced || !starved ? 0 : stallTicksRef.current + 1;
+      if (stallTicksRef.current >= 3) useFallbackAsset();
+    }, 4000);
+    return () => clearInterval(interval);
   }, [usingFallback, mediaError, useFallbackAsset, title?.id]);
 
   // Re-apply the room state once the fallback source has loaded.
@@ -283,13 +310,27 @@ export default function VideoStage({
 
         {mediaError && (
           <div className="video-overlay">
-            <div className="stack" style={{ maxWidth: 360, textAlign: 'center', padding: 20 }}>
-              <strong>The sample video could not load.</strong>
+            <div className="stack" style={{ maxWidth: 380, textAlign: 'center', padding: 20 }}>
+              <strong>This video could not load.</strong>
               <p className="muted" style={{ fontSize: 13 }}>
-                Neither the open-licensed stream nor the bundled sample clip could be loaded.
-                Playback sync, the co-pilot and variation votes still work against the authored
-                timeline.
+                Tried <code>{usingFallback ? title?.fallbackAssetUrl : title?.videoAssetUrl}</code> —
+                both the open-licensed stream and the bundled clip failed. Playback sync, the
+                co-pilot and variation votes still work against the authored timeline.
               </p>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  fallbackRef.current = false;
+                  stallTicksRef.current = 0;
+                  setUsingFallback(false);
+                  setMediaError(false);
+                  setBlocked(false);
+                  videoRef.current?.load();
+                }}
+              >
+                Retry
+              </button>
             </div>
           </div>
         )}

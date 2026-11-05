@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "check:media": "node scripts/check-media.js",
     "seed": "node scripts/seed.js",
     "loadtest": "node scripts/loadtest.js",
     "eval:recs": "node scripts/eval-recommendations.js",

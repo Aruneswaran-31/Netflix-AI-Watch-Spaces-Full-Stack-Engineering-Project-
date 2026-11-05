@@ -217,7 +217,21 @@ Every title has a `videoAssetUrl` and the three short titles also have `fallback
 | The Ridge — Short, Meadow — Short, Drift | `server/public/media/*-10s.mp4` (committed, served by the API at `/api/v1/media/…`) | — |
 | Sintel, Big Buck Bunny, Elephants Dream | the Internet Archive | the matching committed 10-second clip |
 
-The three short clips (~1 MB each) are committed and served from the API origin, so those rooms always play — offline, behind a firewall, on any ISP. The three full films need archive.org, which several networks block; if the film errors *or* delivers no metadata within 8 seconds, the player switches to the local clip automatically, loops it, and shows a **Sample clip** badge while the room clock, trivia, votes and co-pilot keep running off the authored timeline. Sample-clip rate/caption credits: [test-videos.co.uk](https://test-videos.co.uk/).
+The three short clips (~1 MB each) are committed and served from the API origin, so those rooms always play — offline, behind a firewall, on any ISP. The three full films need archive.org, which several networks block. The player falls back to the local clip in three cases, because a blocked or throttled host does not always raise an error:
+
+1. the stream errors (`onError`),
+2. it delivers no metadata within 8 seconds, or
+3. **it stalls mid-playback** — metadata and a first frame arrive, then the bytes stop while the room clock runs. This is the case that looks like "the video does not play": a frozen picture with no error at all. If the element stops advancing for ~12 seconds with a starved buffer, the bundled clip takes over.
+
+On fallback the clip loops and the stage shows a **Sample clip** badge, while the room clock, trivia, votes and co-pilot keep running off the authored timeline. If both sources fail, the overlay names the URL it tried and offers **Retry** — a `/api/v1/media/…` failure there means the SPA is not reaching this API (see [Changing ports](#changing-ports)). Sample-clip rate/caption credits: [test-videos.co.uk](https://test-videos.co.uk/).
+
+To check every catalogue asset at once (server up, then):
+
+```bash
+npm run --workspace server check:media
+```
+
+It prints the HTTP status and content type for each title's primary and fallback source and exits non-zero only on a failing primary.
 
 If a stage still shows nothing, it is a genuine double failure (no upstream and no local file) — check the clip straight from the API, using your configured `PORT` (the command below assumes the 4000 default; my own demo ran on 4300):
 
