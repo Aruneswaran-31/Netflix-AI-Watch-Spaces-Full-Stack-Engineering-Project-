@@ -46,6 +46,17 @@ npm run dev
 - API: <http://localhost:4000>
 - Health: <http://localhost:4000/api/v1/healthz> · Readiness: <http://localhost:4000/api/v1/readyz>
 
+### Changing ports
+
+The API listens on `PORT` (default **4000**) and the SPA on `VITE_PORT` (default **5173**). If 4000 is already taken on your machine, set `PORT` in the root `.env` and start again:
+
+```bash
+# .env at the repo root (not committed)
+PORT=4100
+```
+
+The client proxy reads the same `.env`, so `npm run dev` then serves the SPA on 5173 against the API on 4100 with no other change. If the server cannot bind its port it exits with a `port_in_use` message naming the port and the fix, rather than leaving the SPA pointed at whatever else owns that port.
+
 On first start the server seeds an idempotent demo dataset: three open-licensed films, three short excerpts, authored timelines (beats, characters, glossary, trivia, variation points), demo users, interactions and a scheduled room.
 
 ### Demo accounts
@@ -208,7 +219,13 @@ Every title has a `videoAssetUrl` and the three short titles also have `fallback
 
 The three short clips (~1 MB each) are committed and served from the API origin, so those rooms always play — offline, behind a firewall, on any ISP. The three full films need archive.org, which several networks block; if the film errors *or* delivers no metadata within 8 seconds, the player switches to the local clip automatically, loops it, and shows a **Sample clip** badge while the room clock, trivia, votes and co-pilot keep running off the authored timeline. Sample-clip rate/caption credits: [test-videos.co.uk](https://test-videos.co.uk/).
 
-If a stage still shows nothing, it is a genuine double failure (no upstream and no local file) — check `curl http://localhost:4000/api/v1/media/sintel-10s.mp4`.
+If a stage still shows nothing, it is a genuine double failure (no upstream and no local file) — check the clip straight from the API, using your configured `PORT` (the command below assumes the 4000 default; my own demo ran on 4300):
+
+```bash
+curl -sI http://localhost:4000/api/v1/media/sintel-10s.mp4   # expect 200 video/mp4, Accept-Ranges: bytes
+```
+
+A `404 {"message":"Endpoint not found"}` there means you are talking to a different process on that port, not to this API — see [Changing ports](#changing-ports).
 
 ## Limitations
 
