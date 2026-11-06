@@ -28,8 +28,21 @@ async function seedUsers() {
   return users;
 }
 
+/**
+ * Titles are reconciled on every boot, not only on an empty database.
+ *
+ * A catalogue that only seeds when it is empty means a database created before
+ * a title (or its poster or bundled clip) existed never learns about it. That
+ * is exactly how blank cards and dead video sources survived a restart.
+ *
+ * Existing titles get their media fields refreshed but keep their authored
+ * timeline: admins edit timelines in the app, and a restart must not silently
+ * revert that work.
+ */
 async function seedTitles() {
   const titles = new Map();
+  let created = 0;
+
   for (const definition of TITLES) {
     const validation = validateTimeline(definition.timeline, {
       durationSeconds: definition.durationSeconds,
@@ -46,19 +59,29 @@ async function seedTitles() {
         ...definition,
         timeline: validation.events,
       });
+      created += 1;
     } else {
-      // Keep seed metadata authoritative on reseed.
-      title.set({ ...definition, timeline: validation.events });
+      title.set({
+        posterUrl: definition.posterUrl,
+        videoAssetUrl: definition.videoAssetUrl,
+        fallbackAssetUrl: definition.fallbackAssetUrl,
+        durationSeconds: definition.durationSeconds,
+      });
       await title.save();
     }
     titles.set(definition.slug, title);
   }
-  return titles;
+
+  return { titles, created };
 }
 
+/**
+ * Insert only the seeded interactions that are missing, so a title added to the
+ * catalogue later still gets its demo signal for the recommender.
+ */
 async function seedInteractions(users, titles) {
-  const existing = await Interaction.countDocuments();
-  if (existing > 0) return existing;
+  const existing = await Interaction.find({ source: 'seed' }, { userId: 1, titleId: 1 });
+  const known = new Set(existing.map((row) => `${row.userId}:${row.titleId}`));
 
   const base = new Date('2026-09-01T18:00:00Z').getTime();
   const docs = [];
@@ -66,6 +89,8 @@ async function seedInteractions(users, titles) {
     const user = users.get(entry.key);
     const title = titles.get(entry.slug);
     if (!user || !title) return;
+    if (known.has(`${user._id}:${title._id}`)) return;
+
     const createdAt = new Date(base + index * 6 * 60 * 60 * 1000);
     const ratio = entry.completed ? 1 : entry.ratio || 0.4;
     docs.push({
@@ -81,6 +106,7 @@ async function seedInteractions(users, titles) {
     });
   });
 
+  if (!docs.length) return 0;
   const created = await Interaction.insertMany(docs, { ordered: true });
   log.info('interactions_seeded', { count: created.length });
   return created.length;
@@ -110,40 +136,13 @@ async function seedDemoRoom(host, viewer, titles) {
 }
 
 /**
- * Media URLs and poster frames are deployment facts rather than editorial
- * content: refresh them for existing titles on every boot, so a database seeded
- * before a poster or clip existed does not keep serving the stale one.
+ * Idempotent demo seed. Safe to run on every boot: users, titles and demo
+ * interactions are created only when missing.
  */
-async function reconcileCatalogueMedia() {
-  for (const definition of TITLES) {
-    await Title.updateOne(
-      { slug: definition.slug },
-      {
-        $set: {
-          videoAssetUrl: definition.videoAssetUrl,
-          fallbackAssetUrl: definition.fallbackAssetUrl,
-          posterUrl: definition.posterUrl,
-          durationSeconds: definition.durationSeconds,
-          license: definition.license,
-        },
-      }
-    );
-  }
-}
-
-/**
- * Idempotent demo seed. `onlyIfEmpty` makes server bootstrap cheap on restarts.
- */
-async function seedDatabase({ onlyIfEmpty = false } = {}) {
-  const titleCount = await Title.countDocuments();
-  if (onlyIfEmpty && titleCount > 0) {
-    await reconcileCatalogueMedia();
-    return false;
-  }
-
+async function seedDatabase() {
   const users = await seedUsers();
-  const titles = await seedTitles();
-  const interactionCount = await seedInteractions(users, titles);
+  const { titles, created: titlesCreated } = await seedTitles();
+  const interactionsCreated = await seedInteractions(users, titles);
   const room = await seedDemoRoom(users.get('host'), users.get('viewer'), titles);
   await Interaction.updateOne(
     { userId: users.get('host')._id, titleId: titles.get('sintel')._id },
@@ -153,10 +152,11 @@ async function seedDatabase({ onlyIfEmpty = false } = {}) {
   log.info('seed_complete', {
     users: users.size,
     titles: titles.size,
-    interactions: interactionCount,
+    titlesCreated,
+    interactionsCreated,
     demoRoom: room.inviteCode,
   });
-  return true;
+  return titlesCreated > 0 || interactionsCreated > 0;
 }
 
 module.exports = { seedDatabase };

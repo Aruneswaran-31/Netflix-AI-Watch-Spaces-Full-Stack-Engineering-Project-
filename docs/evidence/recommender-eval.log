@@ -1,16 +1,18 @@
+{"ts":"2026-11-06T16:05:47.683Z","level":"info","scope":"seed","event":"seed_complete","users":9,"titles":10,"titlesCreated":0,"interactionsCreated":0,"demoRoom":"NX-DEMO"}
+{"ts":"2026-11-06T16:05:47.845Z","level":"info","scope":"recommender","event":"model_built","items":10,"interactions":38,"precisionAt5":0.8889,"buildMs":55}
 {
-  "evaluatedAt": "2026-11-04T16:47:35.798Z",
+  "evaluatedAt": "2026-11-06T16:05:47.855Z",
   "method": "hybrid-content-cf",
   "weights": {
     "content": 0.6,
     "collaborative": 0.35,
     "popularity": 0.05
   },
-  "catalogueItems": 6,
-  "interactions": 27,
+  "catalogueItems": 10,
+  "interactions": 38,
   "users": 9,
   "evaluatedUsers": 9,
-  "precisionAt5": 1,
-  "recallAt5": 1,
-  "buildMs": 83
+  "precisionAt5": 0.8889,
+  "recallAt5": 0.8889,
+  "buildMs": 55
 }

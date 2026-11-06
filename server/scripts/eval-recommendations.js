@@ -15,7 +15,7 @@ const Interaction = require('../src/models/Interaction');
 
 async function main() {
   await connectDatabase();
-  await seedDatabase({ onlyIfEmpty: true });
+  await seedDatabase();
 
   const loaded = await recommendationService.loadModel();
   const [{ interactions = 0 } = {}] = await Interaction.aggregate([

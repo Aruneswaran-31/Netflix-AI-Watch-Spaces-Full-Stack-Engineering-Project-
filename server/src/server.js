@@ -32,7 +32,7 @@ async function start({ port = config.port } = {}) {
   await assertPortAvailable(port);
   await connectDatabase();
   if (config.seedDemoData) {
-    const seeded = await seedDatabase({ onlyIfEmpty: true });
+    const seeded = await seedDatabase();
     if (seeded) log.info('demo_data_seeded', {});
   }
 

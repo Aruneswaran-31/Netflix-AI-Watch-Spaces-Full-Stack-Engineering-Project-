@@ -18,7 +18,7 @@ server/.mongo-binaries/
 screenshots/*.webm
 # Bundled sample clips are committed on purpose: playback must survive an
 # offline demo or a network that blocks the upstream open-film hosts.
-!server/public/media/*-10s.mp4
+!server/public/media/*.mp4
 # Poster frames are committed too: cards must not fall back to blank tiles when
 # a third-party image host is unreachable.
 !server/public/media/posters/

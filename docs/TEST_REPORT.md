@@ -1,6 +1,6 @@
 # Test and verification report
 
-Run on 4 November 2026, Node 22 (Windows 11), MongoDB 7 in-memory for tests. Raw output is committed alongside this report:
+Run on 6 November 2026, Node 22 (Windows 11), MongoDB 7 in-memory for tests. Raw output is committed alongside this report:
 
 - [jest.log](evidence/jest.log) — full unit/integration suite
 - [loadtest.log](evidence/loadtest.log) — dashboard load test
@@ -15,7 +15,7 @@ cd server && npm test
 ```
 Test Suites: 8 passed, 8 total
 Tests:       60 passed, 60 total
-Time:        24.377 s
+Time:        28.885 s
 ```
 
 | Suite | What it proves |
@@ -80,16 +80,16 @@ This is a single Node process on a developer laptop with `mongodb-memory-server`
 `npm run eval:recs` — leave-one-out over the seeded interaction history:
 
 ```json
-{ "catalogueItems": 6, "interactions": 27, "users": 9, "evaluatedUsers": 9,
-  "precisionAt5": 1, "recallAt5": 1, "buildMs": 83 }
+{ "catalogueItems": 10, "interactions": 38, "users": 9, "evaluatedUsers": 9,
+  "precisionAt5": 0.8889, "recallAt5": 0.8889, "buildMs": 55 }
 ```
 
-Perfect precision on a 6-title demo catalogue with synthetic history is a correctness check of the ranking pipeline, not evidence of production quality. The same number is surfaced in the admin panel, and a larger catalogue is the honest next step.
+Eight of nine held-out interactions come back in the top five across a ten-title catalogue. The score was 1.00 on the earlier six-title catalogue; the drop is the honest cost of a sparse interaction matrix, not a regression — it is a correctness check of the ranking pipeline, not evidence of production quality. The same number is surfaced in the admin panel.
 
 ## 4. Known limitations
 
-- Playback is coordinated, not DRM-protected. The client plays openly licensed MP4s (Sintel, Big Buck Bunny, Elephants Dream) and committed short excerpts served by the API; a production Netflix integration would need their player SDK and licence handshake, which is out of scope for a public demo.
-- The three full films stream from archive.org, which some ISPs block. The player then falls back to a committed 10-second clip (badge shown), so the timeline features keep working but the picture is not the full film.
+- Playback is coordinated, not DRM-protected. The client plays openly licensed MP4s (Sintel, Big Buck Bunny, Elephants Dream, Tears of Steel, Caminandes: Llamigos, Spring, Sprite Fright) and committed short excerpts served by the API; a production Netflix integration would need their player SDK and licence handshake, which is out of scope for a public demo.
+- The full films stream from archive.org, which some ISPs block. The player then falls back to a committed sample clip (10 or 20 seconds, badge shown), so the timeline features keep working but the picture is not the full film.
 - Socket.io runs in a single process. Horizontal scaling needs the Redis adapter and a shared room clock store; the runtime is isolated in `roomRuntime.js` so that swap is contained.
 - The grounded retriever is an in-process lexical/index hybrid over the authored timeline, sized for a curated catalogue. Larger catalogues want a vector store behind the same `retrieve()` interface.
 - The recommender's collaborative signal is thin at demo scale; it is blended with content and popularity and evaluated offline rather than A/B tested.

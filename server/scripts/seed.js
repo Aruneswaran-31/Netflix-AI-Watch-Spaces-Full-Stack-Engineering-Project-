@@ -10,7 +10,7 @@ const log = createLogger('seed-script');
 (async () => {
   try {
     await connectDatabase();
-    const seeded = await seedDatabase({ onlyIfEmpty: false });
+    const seeded = await seedDatabase();
     log.info('seed_script_done', { seeded });
     console.log('\nSeed complete.');
     console.log('Demo accounts:');

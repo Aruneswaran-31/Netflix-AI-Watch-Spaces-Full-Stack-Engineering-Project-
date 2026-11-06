@@ -57,7 +57,7 @@ PORT=4100
 
 The client proxy reads the same `.env`, so `npm run dev` then serves the SPA on 5173 against the API on 4100 with no other change. If the server cannot bind its port it exits with a `port_in_use` message naming the port and the fix, rather than leaving the SPA pointed at whatever else owns that port.
 
-On first start the server seeds an idempotent demo dataset: three open-licensed films, three short excerpts, authored timelines (beats, characters, glossary, trivia, variation points), demo users, interactions and a scheduled room.
+On first start the server seeds an idempotent demo dataset: seven open-licensed films plus three short excerpts, authored timelines (beats, characters, glossary, trivia, variation points), demo users, interactions and a scheduled room. Titles are reconciled on every start, so a database seeded before a title existed still picks it up (and keeps any timeline an admin edited).
 
 ### Demo accounts
 
@@ -155,12 +155,12 @@ Run `npm test` (Jest, Node 20, embedded Mongo):
 ```
 Test Suites: 8 passed, 8 total
 Tests:       60 passed, 60 total
-Time:        24.377 s
+Time:        28.885 s
 ```
 
 Covered: state machine transitions/drift, timeline validation, grounding and refusals, REST RBAC, socket permissions and broadcast, vote tally/apply, host failover, analytics reconciliation, recommender ranking and cache invalidation. Details and manual evidence: [docs/TEST_REPORT.md](docs/TEST_REPORT.md).
 
-**Recommender evaluation** — `npm run eval:recs` on the seeded catalogue: precision@5 **1.00**, recall@5 **1.00**, 9 evaluated users, 27 interactions, 6 titles, 83 ms model build. This is a smoke-level result on a tiny authored catalogue, not a production benchmark.
+**Recommender evaluation** — `npm run eval:recs` on the seeded catalogue: precision@5 **0.89**, recall@5 **0.89**, 9 evaluated users, 38 interactions, 10 titles, 79 ms model build. This is a smoke-level result on a tiny authored catalogue, not a production benchmark — it dropped from 1.00 when the catalogue grew to ten titles, which is the honest signal of a small, sparse interaction matrix.
 
 **HTTP load test** — `npm run loadtest -- 120 12` (dashboard read path, local MongoDB, single Node process, Supertest, request logging disabled):
 
@@ -206,22 +206,23 @@ docs/                 architecture, API reference, test report, project brief
 
 ## Media & attribution
 
-All sample films are Blender Foundation open movies released under **Creative Commons Attribution 3.0**: *Sintel* (2010), *Big Buck Bunny* (2008), *Elephants Dream* (2006). The timelines (scene markers, trivia, character notes, glossary, variation options) are authored for this project; timestamps are approximate scene markers, which the brief permits. This is an independent engineering demo and is not affiliated with Netflix.
+All sample films are Blender open movies released under **Creative Commons Attribution**: *Sintel* (2010), *Big Buck Bunny* (2008), *Elephants Dream* (2006) and *Tears of Steel* (2012) under CC BY 3.0; *Caminandes: Llamigos* (2016) under CC BY 3.0; *Spring* (2019) and *Sprite Fright* (2021) under CC BY 4.0. The timelines (scene markers, trivia, character notes, glossary, variation options) are authored for this project; timestamps are approximate scene markers, which the brief permits. This is an independent engineering demo and is not affiliated with Netflix.
 
 ### How the video actually reaches the browser
 
-Every title has a `videoAssetUrl` and the three short titles also have `fallbackAssetUrl`:
+Every title has a `videoAssetUrl`, and every full film also has a `fallbackAssetUrl`:
 
 | Title | Primary source | Fallback |
 | --- | --- | --- |
-| The Ridge — Short, Meadow — Short, Drift | `server/public/media/*-10s.mp4` (committed, served by the API at `/api/v1/media/…`) | — |
+| The Ridge — Short, Meadow — Short, Drift | `server/public/media/*.mp4` (committed, served by the API at `/api/v1/media/…`) | — |
 | Sintel, Big Buck Bunny, Elephants Dream | the Internet Archive | the matching committed 10-second clip |
+| Tears of Steel, Caminandes: Llamigos, Spring, Sprite Fright | the Internet Archive | a committed 20-second clip from each film |
 
 Each title also has a poster frame at `server/public/media/posters/<slug>.jpg`, extracted from the film itself and committed, served from the API origin at `/api/v1/media/posters/…`. Cards, room thumbnails and the player's `poster` attribute all use it. It is a deployment fact rather than editorial content, so the seed reconciles poster and media URLs for existing titles on every boot — a database seeded before the posters existed picks them up without a wipe. These were added after the catalogue shipped `posterUrl: ''` and every card rendered a blank tile with just the title's initials.
 
 ![Dashboard with poster frames](docs/evidence/dashboard-posters-cards.png)
 
-The three short clips (~1 MB each) are committed and served from the API origin, so those rooms always play — offline, behind a firewall, on any ISP. The three full films need archive.org, which several networks block. The player falls back to the local clip in three cases, because a blocked or throttled host does not always raise an error:
+The short clips (~1 MB each) and the four 20-second movie clips (~1.3–3.4 MB each) are committed and served from the API origin, so those rooms always play — offline, behind a firewall, on any ISP. The full films need archive.org, which several networks block. The player falls back to the local clip in three cases, because a blocked or throttled host does not always raise an error:
 
 1. the stream errors (`onError`),
 2. it delivers no metadata within 8 seconds, or
@@ -248,8 +249,8 @@ A `404 {"message":"Endpoint not found"}` there means you are talking to a differ
 ## Limitations
 
 - No DRM or real Netflix catalogue integration; playback uses open-licensed HTTP video.
-- The three full films stream from archive.org. Networks that block it get the bundled 10-second sample clip instead, so the picture is not the full film there (the timeline-driven features are unaffected).
+- The full films stream from archive.org. Networks that block it get the bundled sample clip instead (10 or 20 seconds), so the picture is not the full film there (the timeline-driven features are unaffected).
 - Room clocks and timers are process-local (single instance).
 - The co-pilot’s default provider is a deterministic grounded synthesizer; an LLM key is optional and only rephrases retrieved evidence.
-- The recommender is deliberately small and transparent; its perfect leave-one-out score reflects a 6-title demo catalogue.
+- The recommender is deliberately small and transparent; its leave-one-out score reflects a 10-title demo catalogue with 38 seeded interactions.
 - Admin role changes are not restricted from demoting the last admin — a production deployment should add that guard.

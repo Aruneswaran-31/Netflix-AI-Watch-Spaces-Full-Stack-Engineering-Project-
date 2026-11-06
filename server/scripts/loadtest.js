@@ -25,7 +25,7 @@ function percentile(sorted, p) {
 
 async function main() {
   await connectDatabase();
-  await seedDatabase({ onlyIfEmpty: true });
+  await seedDatabase();
   const app = createApp();
 
   const login = await request(app)
