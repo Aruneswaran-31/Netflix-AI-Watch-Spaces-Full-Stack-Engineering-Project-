@@ -14,15 +14,15 @@ cd server && npm test
 
 ```
 Test Suites: 8 passed, 8 total
-Tests:       60 passed, 60 total
-Time:        28.885 s
+Tests:       62 passed, 62 total
+Time:        25.217 s
 ```
 
 | Suite | What it proves |
 | --- | --- |
 | `playbackStateMachine.test.js` (8) | The clock only advances while playing; pause/resume keeps position; seek freezes and restores the previous status; buffering → ready restores paused; clamping; revision monotonicity; drift sign and the soft/hard correction thresholds. |
 | `timeline.test.js` (8) | Timeline validation rejects overlapping trivia, out-of-range timestamps, duplicate ids, malformed variation options and missing approved options; valid authored timelines pass; in-range retrieval and window filtering are correct. |
-| `aiEngine.test.js` (9) | Grounded answers cite only ids that exist and have already played; no answer is invented when retrieval fails; off-timeline and prompt-injection questions are declined; glossary questions resolve to the timeless entry; variation questions return only pre-approved options; catalogue-level questions fall back to the synopsis. |
+| `aiEngine.test.js` (11) | Grounded answers cite only ids that exist and have already played; no answer is invented when retrieval fails; off-timeline and prompt-injection questions are declined; glossary questions resolve to the timeless entry; variation questions return only pre-approved options; catalogue-level questions fall back to the synopsis. |
 | `realtime.test.js` (7) | Two real Socket.io clients synchronise on host play/seek with bounded drift; non-host playback intents are rejected; non-members cannot join; chat is persisted and broadcast; disconnect removes presence; host drop pauses the room and hands the host to the longest-present participant. |
 | `api.rbac.test.js` (15) | Register/login/refresh/logout, duplicate-account conflict, viewer cannot create a room or open a vote, non-host cannot moderate or end, private rooms hide from non-members, invite codes join correctly, ballots are unique per user, vote tally and winner application, admin-only title editing, 401/403/422 shapes. |
 | `analytics.test.js` (2) | Event-log aggregation, peak-concurrency computation, reconciliation against denormalised counters, observed duration and the live-playback position. |

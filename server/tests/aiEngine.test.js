@@ -148,6 +148,67 @@ describe('AI Content Engine grounding', () => {
     expect(result.answer).toContain('Plain');
   });
 
+  test('keeps a character retrievable while its authored span still covers the playhead', () => {
+    // A character introduced at 00:20 and authored as present to the end of a
+    // ten-minute film is still the answer to "who is…?" at 06:40. The lookback
+    // window used to drop it, so the co-pilot cited whichever beat mentioned
+    // the name most recently instead.
+    const longFilm = {
+      ...title,
+      durationSeconds: 630,
+      timeline: [
+        {
+          id: 'ev_sprites',
+          ts: 26,
+          endTs: 630,
+          type: 'character',
+          character: 'The sprites',
+          text: 'Small mushroom-capped sprites who watch the camp from under the ferns.',
+          tags: ['sprites', 'mushroom', 'forest'],
+        },
+        {
+          id: 'ev_late_beat',
+          ts: 300,
+          type: 'beat',
+          text: 'A sprite holds a spear while dozens of eyes watch from the dark.',
+          tags: ['sprites', 'spear', 'eyes'],
+        },
+      ],
+    };
+
+    const retrieval = retrieveContext({
+      title: longFilm,
+      question: 'Who are the sprites?',
+      currentTs: 400,
+    });
+
+    expect(retrieval.intent).toBe('who');
+    expect(retrieval.sources[0].id).toBe('ev_sprites');
+  });
+
+  test('matches a hyphenated authored term when the question splits it', () => {
+    const film = {
+      ...title,
+      timeline: [
+        {
+          id: 'ev_live_action',
+          ts: 30,
+          type: 'trivia',
+          text: 'The first open movie to combine live-action footage with computer-generated effects.',
+          tags: ['production', 'vfx'],
+        },
+      ],
+    };
+
+    const retrieval = retrieveContext({
+      title: film,
+      question: 'Was it live action?',
+      currentTs: 40,
+    });
+
+    expect(retrieval.sources.map((source) => source.id)).toContain('ev_live_action');
+  });
+
   test('falls back to the title synopsis for a catalogue-level question', async () => {
     const result = await askCoPilot({
       title,

@@ -28,7 +28,7 @@
 - **Socket.io 4** — room state, presence, chat, trivia, votes, playback sync.
 - **MongoDB + Mongoose 8** — users, titles with embedded timelines, rooms, votes, chat, interactions, session events.
 - **React 18 + Vite 5 + React Router 6** — SPA with a custom dark design system.
-- **Jest 29 + Supertest + socket.io-client** — 60 automated tests across 8 suites.
+- **Jest 29 + Supertest + socket.io-client** — 62 automated tests across 8 suites.
 - **No required external services** — with no `MONGODB_URI`, the server starts an embedded `mongodb-memory-server` instance, so `npm install && npm run dev` is enough for a demo.
 
 ---
@@ -74,7 +74,7 @@ The login screen has one-click buttons for these accounts.
 ```bash
 npm run dev          # API + Vite together
 npm run seed         # re-seed (idempotent)
-npm test             # 8 Jest suites, 60 tests
+npm test             # 8 Jest suites, 62 tests
 npm run build        # production SPA build
 npm start            # API, serving client/dist when present
 npm run eval:recs    # leave-one-out recommender report
@@ -154,8 +154,8 @@ Run `npm test` (Jest, Node 20, embedded Mongo):
 
 ```
 Test Suites: 8 passed, 8 total
-Tests:       60 passed, 60 total
-Time:        28.885 s
+Tests:       62 passed, 62 total
+Time:        25.217 s
 ```
 
 Covered: state machine transitions/drift, timeline validation, grounding and refusals, REST RBAC, socket permissions and broadcast, vote tally/apply, host failover, analytics reconciliation, recommender ranking and cache invalidation. Details and manual evidence: [docs/TEST_REPORT.md](docs/TEST_REPORT.md).
@@ -197,7 +197,7 @@ server/
   src/routes/         auth, titles, watchSpaces, engagement, admin, health
   src/sockets/        authenticated Socket.io gateway
   src/seed/           authored catalogue, timelines, demo users/interactions
-  tests/              8 Jest suites (60 tests)
+  tests/              8 Jest suites (62 tests)
   scripts/            seed, recommender evaluation, load test
 docs/                 architecture, API reference, test report, project brief
 ```

@@ -1005,8 +1005,8 @@ const CAMINANDES_TIMELINE = [
     id: 'cam_009',
     ts: 44,
     type: 'trivia',
-    text: 'The title is a pun: llama plus amigos — friends.',
-    tags: ['title', 'pun', 'amigos', 'friends', 'name'],
+    text: 'The title is a pun: llama plus amigos. That means “Llamigos” is the word for what the two rivals turn into — friends.',
+    tags: ['title', 'pun', 'amigos', 'friends', 'name', 'llamigos meaning', 'word meaning'],
     priority: 'high',
   },
   {

@@ -1,93 +1,95 @@
-PASS tests/analytics.test.js (18.745 s)
-  √ session summary computes counts and peak concurrency from the event log (125 ms)
-  √ host analytics reports reconciled counters and live playback position (71 ms)
+PASS tests/analytics.test.js (16.223 s)
+  √ session summary computes counts and peak concurrency from the event log (108 ms)
+  √ host analytics reports reconciled counters and live playback position (68 ms)
 
-PASS tests/api.rbac.test.js (21.806 s)
+PASS tests/api.rbac.test.js (19.312 s)
   authentication
-    √ register returns a usable access token and refresh token (402 ms)
-    √ rejects duplicate registration and bad passwords (58 ms)
-    √ refresh rotates the refresh token (398 ms)
-    √ protected routes reject anonymous callers (116 ms)
+    √ register returns a usable access token and refresh token (419 ms)
+    √ rejects duplicate registration and bad passwords (48 ms)
+    √ refresh rotates the refresh token (387 ms)
+    √ protected routes reject anonymous callers (57 ms)
   role-based access control
-    √ viewers cannot create a Watch Space; hosts can (116 ms)
-    √ only the room host can mutate room settings (66 ms)
-    √ room analytics are host-only (121 ms)
-    √ admin endpoints are admin-only (117 ms)
+    √ viewers cannot create a Watch Space; hosts can (103 ms)
+    √ only the room host can mutate room settings (78 ms)
+    √ room analytics are host-only (92 ms)
+    √ admin endpoints are admin-only (108 ms)
   timeline metadata administration
-    √ rejects an invalid timeline with path-level errors (37 ms)
-    √ accepts and versions a valid timeline upload (123 ms)
+    √ rejects an invalid timeline with path-level errors (48 ms)
+    √ accepts and versions a valid timeline upload (134 ms)
   AI co-pilot REST contract
-    √ non-members cannot query the co-pilot (334 ms)
-    √ members get a grounded, cited answer (201 ms)
-    √ off-timeline questions are declined over REST too (118 ms)
+    √ non-members cannot query the co-pilot (350 ms)
+    √ members get a grounded, cited answer (256 ms)
+    √ off-timeline questions are declined over REST too (117 ms)
   dashboard and recommendations contract
-    √ returns stats, recent titles and a rail with explanations (687 ms)
-    √ recording an interaction invalidates the cached rail (82 ms)
+    √ returns stats, recent titles and a rail with explanations (650 ms)
+    √ recording an interaction invalidates the cached rail (58 ms)
 
-PASS tests/realtime.test.js (23.102 s)
-  √ participants cannot drive playback; the host can (68 ms)
-  √ a participant far out of sync is told to seek, not drift slowly (16 ms)
-  √ chat is broadcast to the room and persisted (162 ms)
-  √ seeking near an authored marker surfaces contextual trivia within one tick window (2137 ms)
-  √ a viewer gets a grounded co-pilot answer over the socket (103 ms)
-  √ only the host can open a variation vote; ballots aggregate and apply (538 ms)
-  √ when the host drops, playback pauses and the longest-present participant is promoted (467 ms)
-
-PASS tests/timeline.test.js
-  timeline validation
-    √ every seeded timeline is valid against its duration (86 ms)
-    √ reports duplicate ids, missing glossary fields and timestamp overflow (7 ms)
-    √ variation points require a kind, two options and a valid default
-    √ assigns stable ids to newly authored events (4 ms)
-  timeline queries
-    √ eventsInRange is inclusive and sorted (5 ms)
-    √ markersCrossed does not replay markers skipped by a forward seek (3 ms)
-    √ variationPoints filters authored variation markers (1 ms)
-    √ minimal verbosity only surfaces high-priority trivia (1 ms)
+PASS tests/realtime.test.js (20.353 s)
+  √ participants cannot drive playback; the host can (72 ms)
+  √ a participant far out of sync is told to seek, not drift slowly (15 ms)
+  √ chat is broadcast to the room and persisted (122 ms)
+  √ seeking near an authored marker surfaces contextual trivia within one tick window (2144 ms)
+  √ a viewer gets a grounded co-pilot answer over the socket (132 ms)
+  √ only the host can open a variation vote; ballots aggregate and apply (442 ms)
+  √ when the host drops, playback pauses and the longest-present participant is promoted (453 ms)
 
 PASS tests/aiEngine.test.js
   AI Content Engine grounding
-    √ classifies question intent (8 ms)
-    √ retrieves the character entry in range and ranks it first (8 ms)
-    √ answers with the character name and cites only real timeline ids (6 ms)
-    √ declines instead of inventing an answer when retrieval finds nothing (9 ms)
-    √ prompt-injection phrased as an off-timeline question is still declined (5 ms)
+    √ classifies question intent (4 ms)
+    √ retrieves the character entry in range and ranks it first (9 ms)
+    √ answers with the character name and cites only real timeline ids (7 ms)
+    √ declines instead of inventing an answer when retrieval finds nothing (10 ms)
+    √ prompt-injection phrased as an off-timeline question is still declined (4 ms)
     √ never retrieves authored events that have not played yet (3 ms)
-    √ answers glossary questions from the timeless glossary entry (13 ms)
-    √ surfaces the pre-approved options for a variation question (5 ms)
-    √ falls back to the title synopsis for a catalogue-level question (4 ms)
+    √ answers glossary questions from the timeless glossary entry (11 ms)
+    √ surfaces the pre-approved options for a variation question (3 ms)
+    √ keeps a character retrievable while its authored span still covers the playhead (4 ms)
+    √ matches a hyphenated authored term when the question splits it (9 ms)
+    √ falls back to the title synopsis for a catalogue-level question (2 ms)
+
+PASS tests/timeline.test.js
+  timeline validation
+    √ every seeded timeline is valid against its duration (100 ms)
+    √ reports duplicate ids, missing glossary fields and timestamp overflow (3 ms)
+    √ variation points require a kind, two options and a valid default (4 ms)
+    √ assigns stable ids to newly authored events (1 ms)
+  timeline queries
+    √ eventsInRange is inclusive and sorted (2 ms)
+    √ markersCrossed does not replay markers skipped by a forward seek (7 ms)
+    √ variationPoints filters authored variation markers (3 ms)
+    √ minimal verbosity only surfaces high-priority trivia
 
 PASS tests/playbackStateMachine.test.js
   authoritative playback state machine
-    √ position only advances while playing (7 ms)
+    √ position only advances while playing (9 ms)
     √ resuming does not lose the paused position (1 ms)
     √ seeking freezes the clock and resumes the previous status (1 ms)
-    √ buffering resumes to playing, and ready restores the paused state (2 ms)
-    √ positions are clamped to the title duration and never negative
+    √ buffering resumes to playing, and ready restores the paused state (1 ms)
+    √ positions are clamped to the title duration and never negative (1 ms)
     √ revisions increase on every accepted intent, snapshots round positions (3 ms)
-    √ drift is positive when the participant is behind the room (2 ms)
-    √ correction stays silent under the soft threshold and seeks when hard (6 ms)
+    √ drift is positive when the participant is behind the room (1 ms)
+    √ correction stays silent under the soft threshold and seeks when hard (10 ms)
 
-PASS tests/media.test.js (5.762 s)
-  bundled sample media
-    √ serves a committed clip with a video content type (423 ms)
-    √ honours range requests so the browser can seek (23 ms)
-    √ returns 404 for an unknown asset (19 ms)
-    √ every local media reference in the seed points at a committed file (40 ms)
-    √ gives every title a locally served poster and returns it as an image (255 ms)
-    √ every full film carries a local fallback (2 ms)
-
-PASS tests/recommendations.test.js (8.979 s)
+PASS tests/recommendations.test.js (7.686 s)
   hybrid recommender (pure)
-    √ content similarity outranks an unrelated genre and skips completed titles (9 ms)
-    √ a cold-start user still gets a ranked, explained rail (70 ms)
+    √ content similarity outranks an unrelated genre and skips completed titles (10 ms)
+    √ a cold-start user still gets a ranked, explained rail (68 ms)
   recommender against the seeded catalogue
-    √ leave-one-out precision@5 clears the PRD target (430 ms)
-    √ completed titles never appear in a user rail (46 ms)
-    √ new interactions change the cached rail after invalidation (813 ms)
+    √ leave-one-out precision@5 clears the PRD target (431 ms)
+    √ completed titles never appear in a user rail (32 ms)
+    √ new interactions change the cached rail after invalidation (598 ms)
+
+PASS tests/media.test.js (5.004 s)
+  bundled sample media
+    √ serves a committed clip with a video content type (268 ms)
+    √ honours range requests so the browser can seek (26 ms)
+    √ returns 404 for an unknown asset (37 ms)
+    √ every local media reference in the seed points at a committed file (31 ms)
+    √ gives every title a locally served poster and returns it as an image (115 ms)
+    √ every full film carries a local fallback (3 ms)
 
 Test Suites: 8 passed, 8 total
-Tests:       60 passed, 60 total
+Tests:       62 passed, 62 total
 Snapshots:   0 total
-Time:        28.885 s, estimated 31 s
+Time:        25.217 s, estimated 32 s
 Ran all test suites.

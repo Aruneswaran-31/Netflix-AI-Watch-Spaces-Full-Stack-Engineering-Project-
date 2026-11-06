@@ -71,7 +71,10 @@ function entryHaystack(event) {
     ...(event.options || []).map((option) => `${option.label} ${option.description || ''}`),
   ]
     .join(' ')
-    .toLowerCase();
+    .toLowerCase()
+    // "live-action" must be reachable by the query terms "live" and "action";
+    // keeping the hyphen makes it one opaque token that never matches either.
+    .replace(/-/g, ' ');
 }
 
 function buildCorpus(title) {
@@ -171,7 +174,13 @@ function retrieveContext({
   for (const entry of corpus.entries) {
     if (!entry.timeless) {
       if (entry.ts > currentTs + lookaheadSeconds) continue;
-      if (entry.ts < currentTs - lookbackSeconds) continue;
+      // An entry that starts before the lookback window but is still *active*
+      // at the playhead (a character on screen for the whole film) is exactly
+      // what a "who is…" question is asking about. Dropping it made character
+      // answers on long films fall back to whatever beat mentioned the name
+      // most recently.
+      const activeAtPlayhead = entry.endTs && entry.ts <= currentTs && currentTs <= entry.endTs;
+      if (entry.ts < currentTs - lookbackSeconds && !activeAtPlayhead) continue;
     }
 
     let score = 0;
