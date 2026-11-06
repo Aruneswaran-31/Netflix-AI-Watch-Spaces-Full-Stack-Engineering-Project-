@@ -39,7 +39,7 @@ async function seedUsers() {
  * timeline: admins edit timelines in the app, and a restart must not silently
  * revert that work.
  */
-async function seedTitles() {
+async function seedTitles({ refreshTimelines = false } = {}) {
   const titles = new Map();
   let created = 0;
 
@@ -67,6 +67,10 @@ async function seedTitles() {
         fallbackAssetUrl: definition.fallbackAssetUrl,
         durationSeconds: definition.durationSeconds,
       });
+      // `npm run seed` is the explicit "make the catalogue match the code"
+      // command, so it may replace authored timelines. Boot does not, because
+      // that would silently revert timeline edits made in the admin studio.
+      if (refreshTimelines) title.set({ timeline: validation.events });
       await title.save();
     }
     titles.set(definition.slug, title);
@@ -137,11 +141,12 @@ async function seedDemoRoom(host, viewer, titles) {
 
 /**
  * Idempotent demo seed. Safe to run on every boot: users, titles and demo
- * interactions are created only when missing.
+ * interactions are created only when missing. Pass `refreshTimelines` from the
+ * explicit seed script to also overwrite timelines with the authored versions.
  */
-async function seedDatabase() {
+async function seedDatabase({ refreshTimelines = false } = {}) {
   const users = await seedUsers();
-  const { titles, created: titlesCreated } = await seedTitles();
+  const { titles, created: titlesCreated } = await seedTitles({ refreshTimelines });
   const interactionsCreated = await seedInteractions(users, titles);
   const room = await seedDemoRoom(users.get('host'), users.get('viewer'), titles);
   await Interaction.updateOne(
